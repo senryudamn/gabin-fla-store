@@ -179,7 +179,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_PARTNER_APPLICATIONS;
   });
 
-  // Initial cart: 5 Classic Vanilla + 5 Robusta (Total 10 pcs, 2 flavors)
+  // Initial cart: Diubah menjadi array kosong agar tidak ada menu dummy
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('gabin_cart');
     if (saved) {
@@ -192,10 +192,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // fallback
       }
     }
-    return [
-      { flavorId: 'classic-vanilla', quantity: 5 },
-      { flavorId: 'espresso-blend', quantity: 5 },
-    ];
+    return []; // Kembali sebagai array kosong
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -283,8 +280,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Preview flavor helper
-  const previewFlavor = flavors.find((f) => f.id === previewFlavorId) || flavors[0] || INITIAL_FLAVORS[0];
+  // Preview flavor helper (Menambahkan safe fallback untuk database kosong)
+  const safeFallbackFlavor: Flavor = {
+    id: 'empty-state',
+    name: 'Belum Ada Varian',
+    subtitle: 'Menunggu Data',
+    description: '',
+    price: 0,
+    image: '',
+    category: 'classic',
+    flaColorHex: '#FFF4D0', // Fallback warna agar 3D tidak error
+    available: false,
+    sweetness: 0,
+    richness: 0,
+    ingredients: []
+  };
+  const previewFlavor = flavors.find((f) => f.id === previewFlavorId) || flavors[0] || INITIAL_FLAVORS[0] || safeFallbackFlavor;
 
   // Pricing calculation helper
   const calculateOrderPricing = (cartItems: CartItem[]) => {
