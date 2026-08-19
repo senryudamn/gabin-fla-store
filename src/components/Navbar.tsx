@@ -49,7 +49,7 @@ export const Navbar: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-[#8A7160] font-medium hidden sm:block">
-              Homemade Goodness • Lumer di Setiap Gigitan
+              Proyek anak teknik yang numpang lewat
             </p>
           </div>
         </div>
