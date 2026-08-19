@@ -167,7 +167,7 @@ export const OrderForm: React.FC = () => {
                   <p className="text-[11px] pt-1 opacity-90">
                     {isMinimumMet
                       ? pcsToNextDiscount === 0
-                        ? `🎉 Anda telah mengaktifkan diskon kelipatan 10 pcs!`
+                        ? `✨ Anda telah mengaktifkan diskon kelipatan 10 pcs!`
                         : `💡 Tambah ${pcsToNextDiscount} pcs lagi untuk mendapatkan ekstra diskon kelipatan berikutnya!`
                       : `Minimal pemesanan adalah 10 pcs. Anda bebas mencampur rasa apa saja.`}
                   </p>
@@ -349,9 +349,13 @@ export const OrderForm: React.FC = () => {
                     id="order-input-date"
                     type="date"
                     required
+                    min={defaultDateStr} /* Mencegah pilih hari kemarin */
                     value={pickupDate}
+                    onClick={(e) => {
+                      try { e.currentTarget.showPicker(); } catch(err) {} 
+                    }} /* Memicu kalender ketika diklik di mana saja */
                     onChange={(e) => setPickupDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#E88C38] bg-[#FFFCF8]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#E88C38] bg-[#FFFCF8] cursor-pointer"
                   />
                 </div>
 
@@ -364,7 +368,7 @@ export const OrderForm: React.FC = () => {
                     id="order-select-time"
                     value={pickupTime}
                     onChange={(e) => setPickupTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#E88C38] bg-[#FFFCF8]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#E88C38] bg-[#FFFCF8] cursor-pointer"
                   >
                     <option value="09:00">09.00 WIB</option>
                     <option value="10:00">10.00 WIB</option>
@@ -407,7 +411,7 @@ export const OrderForm: React.FC = () => {
 
                 {pricing.discount > 0 && (
                   <div className="flex justify-between text-xs text-emerald-700 font-bold bg-emerald-100/60 p-1.5 rounded-lg">
-                    <span>🎁 Diskon Promo:</span>
+                    <span>✨ Diskon Promo:</span>
                     <span>- Rp {pricing.discount.toLocaleString('id-ID')}</span>
                   </div>
                 )}
@@ -425,7 +429,7 @@ export const OrderForm: React.FC = () => {
                     <span className="text-[#C46A18]">Rp {pricing.dp.toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between text-[#8A7160]">
-                    <span>💵 Pelunasan saat Pick-up:</span>
+                    <span>🤝 Pelunasan saat Pick-up:</span>
                     <span>Rp {pricing.remaining.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
@@ -487,7 +491,7 @@ export const OrderForm: React.FC = () => {
               <button
                 type="button"
                 onClick={copyOrderCode}
-                className="px-3 py-1.5 rounded-xl bg-white border border-[#E3C8B4] text-xs font-bold text-[#4A3427] hover:bg-[#FAF0E6] flex items-center gap-1 shadow-2xs"
+                className="px-3 py-1.5 rounded-xl bg-white border border-[#E3C8B4] text-xs font-bold text-[#4A3427] hover:bg-[#FAF0E6] flex items-center gap-1 shadow-2xs cursor-pointer"
               >
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                 <span>{copied ? 'Tersalin' : 'Salin'}</span>
@@ -527,7 +531,7 @@ export const OrderForm: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSuccessOrderData(null)}
-                className="w-full py-2.5 text-xs font-semibold text-[#8C7362] hover:text-[#3B281B]"
+                className="w-full py-2.5 text-xs font-semibold text-[#8C7362] hover:text-[#3B281B] cursor-pointer"
               >
                 Tutup Jendela
               </button>

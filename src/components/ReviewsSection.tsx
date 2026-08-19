@@ -1,40 +1,7 @@
 import React from 'react';
-import { Star, Sparkles, Heart, Quote, Instagram, ShieldCheck } from 'lucide-react';
+import { Star, Heart, Instagram, MessageSquare } from 'lucide-react';
 
 export const ReviewsSection: React.FC = () => {
-  const reviews = [
-    {
-      id: 1,
-      author: 'Anisa Dian Pratiwi',
-      city: 'Yogyakarta',
-      rating: 5,
-      date: '2 hari yang lalu',
-      favoriteFlavor: 'Kyoto Uji Matcha & Vanilla',
-      content: 'Fla matchanya beneran wangi dan rasanya ga abal-abal! Ga terlalu manis dan biskuitnya tetap garing walaupun dimakan sore hari. Nagih banget buat temen ngeteh.',
-      badge: 'Verified Pick-up Kotabaru',
-    },
-    {
-      id: 2,
-      author: 'Dimas Wicaksono',
-      city: 'Sleman',
-      rating: 5,
-      date: 'Kemarin',
-      favoriteFlavor: 'Espresso Robusta Roast',
-      content: 'Kopi robustanya berasa banget, aromanya nendang pas digigit. Pesan 20 pcs buat acara kantor langsung ludes dalam 10 menit. Packagingnya juga rapi banget.',
-      badge: 'Verified Pick-up Kaliurang',
-    },
-    {
-      id: 3,
-      author: 'Clara Michelle',
-      city: 'Bantul',
-      rating: 5,
-      date: '3 hari yang lalu',
-      favoriteFlavor: 'Red Velvet Cream Cheese',
-      content: 'Isian flanya tebal dan creamy pol! Sensasi asam manis cream cheesenya bikin ga enek sama sekali. Udah order ketiga kalinya di Gabin Isi Fla.',
-      badge: 'Langganan Setia',
-    },
-  ];
-
   return (
     <section className="py-14 sm:py-20 bg-[#FFF9F2] border-b border-[#F0DDCF]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -54,50 +21,21 @@ export const ReviewsSection: React.FC = () => {
               ))}
             </div>
             <span className="text-sm font-bold text-[#321F13]">4.9 / 5.0</span>
-            <span className="text-xs text-[#8A7160]">• 340+ Ulasan Puas</span>
+            <span className="text-xs text-[#8A7160]">• Segera Hadir</span>
           </div>
         </div>
 
-        {/* Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {reviews.map((rev) => (
-            <div
-              key={rev.id}
-              className="bg-white rounded-3xl border border-[#ECD9C7] p-6 shadow-xs flex flex-col justify-between space-y-4 relative"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex text-amber-400">
-                    {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="h-3.5 w-3.5 fill-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-[11px] text-[#8C7362]">{rev.date}</span>
-                </div>
-
-                <Quote className="h-6 w-6 text-[#E88C38]/40" />
-
-                <p className="text-xs sm:text-sm text-[#5C4537] leading-relaxed italic">
-                  "{rev.content}"
-                </p>
-
-                <div className="p-2 rounded-xl bg-[#FFF5EC] border border-[#FAD8BD] text-[10px] text-[#8C6D58] font-bold">
-                  Favorit: <span className="text-[#C46A18]">{rev.favoriteFlavor}</span>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-[#F2E4D8] flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-[#321F13]">{rev.author}</h4>
-                  <p className="text-[10px] text-[#8A7160]">{rev.city}</p>
-                </div>
-
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-                  {rev.badge}
-                </span>
-              </div>
-            </div>
-          ))}
+        {/* Tempat Kosong untuk Fitur Komentar Mendatang */}
+        <div className="bg-white rounded-3xl border-2 border-dashed border-[#ECD9C7] p-10 sm:p-16 flex flex-col items-center justify-center text-center space-y-4 shadow-sm">
+          <div className="h-16 w-16 rounded-full bg-[#FFF5EC] flex items-center justify-center">
+            <MessageSquare className="h-8 w-8 text-[#E88C38]/60" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-[#321F13] text-lg">Belum Ada Ulasan Ditampilkan</h3>
+            <p className="text-[#8A7160] text-sm max-w-md mx-auto">
+              Ruang ini telah disiapkan. Fitur ulasan dan komentar pelanggan secara langsung akan segera diintegrasikan ke dalam sistem.
+            </p>
+          </div>
         </div>
 
         {/* Instagram Social Callout */}
