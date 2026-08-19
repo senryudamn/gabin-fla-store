@@ -111,15 +111,21 @@ export const AdminPartnershipManager: React.FC = () => {
 
   const handleSaveTier = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Membersihkan array fasilitas (menghilangkan spasi berlebih dan string kosong)
+    const cleanFacilities = (editingTier ? editingTier.freeFacilities : tierForm.freeFacilities)
+      .map(f => f.trim())
+      .filter(Boolean);
+
     if (editingTier) {
-      updatePartnerTier(editingTier);
+      updatePartnerTier({ ...editingTier, freeFacilities: cleanFacilities });
       setEditingTier(null);
     } else if (isAddingTier) {
       if (!tierForm.tierName.trim()) {
         showToast('Nama tier tidak boleh kosong', 'warning');
         return;
       }
-      addPartnerTier(tierForm);
+      addPartnerTier({ ...tierForm, freeFacilities: cleanFacilities });
       setIsAddingTier(false);
     }
   };
@@ -945,7 +951,7 @@ export const AdminPartnershipManager: React.FC = () => {
               {/* Retail and Margin */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#3B281B]">Saran Harga Jual Konsumen (Rp)</label>
+                  <label className="text-xs font-bold text-[#3B281B]">Saran Harga Jual (Rp)</label>
                   <input
                     type="number"
                     step="500"
@@ -975,6 +981,22 @@ export const AdminPartnershipManager: React.FC = () => {
                     <option value="tempo_mingguan">Tempo Mingguan</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Fasilitas & Layanan Khusus */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#3B281B]">Fasilitas & Layanan Khusus (Pisahkan koma)</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Toples Display Kaca, Gratis Ongkir, Spanduk"
+                  value={editingTier ? editingTier.freeFacilities.join(', ') : tierForm.freeFacilities.join(', ')}
+                  onChange={(e) => {
+                    const arr = e.target.value.split(',').map(s => s.trimStart());
+                    if (editingTier) setEditingTier({ ...editingTier, freeFacilities: arr });
+                    else setTierForm({ ...tierForm, freeFacilities: arr });
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
+                />
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-2 border-t border-[#F0DDD0]">
