@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Sparkles, HelpCircle, Check, ArrowRight, RotateCcw, Heart } from 'lucide-react';
+import { Sparkles, HelpCircle, Check, ArrowRight, RotateCcw, Heart, Coffee, Zap, Leaf, Cake, Cherry } from 'lucide-react';
 
 export const TasteQuiz: React.FC = () => {
   const { addToCart, setPreviewFlavorId, showToast } = useApp();
   const [step, setStep] = useState<number>(1);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedSweetness, setSelectedSweetness] = useState<string | null>(null);
 
   const moods = [
-    { id: 'classic', label: '☕ Santai Sore Hari & Nostalgia', desc: 'Rasa gurih manis hangat yang ramah di lidah', match: 'classic-vanilla' },
-    { id: 'coffee', label: '⚡ Butuh Fokus & Mood Booster', desc: 'Aroma kopi pekat sangrai nusantara', match: 'espresso-blend' },
-    { id: 'zen', label: '🍵 Ketenangan & Cita Rasa Jepang', desc: 'Aroma matcha hijau Uji yang calming', match: 'kyoto-matcha' },
-    { id: 'treat', label: '🍰 Me-Time Mewah & Cream Cheese', desc: 'Kombinasi velvet merah & keju lembut', match: 'red-velvet' },
-    { id: 'fruity', label: '🍓 Segar Ceria & Asam Manis', desc: 'Sensasi buah stroberi & bluberi segar', match: 'mixed-berry' },
+    { id: 'classic', icon: Coffee, label: 'Santai Sore Hari & Nostalgia', desc: 'Rasa gurih manis hangat yang ramah di lidah', match: 'classic-vanilla' },
+    { id: 'coffee', icon: Zap, label: 'Butuh Fokus & Mood Booster', desc: 'Aroma kopi pekat sangrai nusantara', match: 'espresso-blend' },
+    { id: 'zen', icon: Leaf, label: 'Ketenangan & Cita Rasa Jepang', desc: 'Aroma matcha hijau Uji yang calming', match: 'kyoto-matcha' },
+    { id: 'treat', icon: Cake, label: 'Me-Time Mewah & Cream Cheese', desc: 'Kombinasi velvet merah & keju lembut', match: 'red-velvet' },
+    { id: 'fruity', icon: Cherry, label: 'Segar Ceria & Asam Manis', desc: 'Sensasi buah stroberi & bluberi segar', match: 'mixed-berry' },
   ];
 
   const handleSelectMood = (moodId: string) => {
@@ -31,7 +30,6 @@ export const TasteQuiz: React.FC = () => {
   const resetQuiz = () => {
     setStep(1);
     setSelectedMood(null);
-    setSelectedSweetness(null);
   };
 
   return (
@@ -46,7 +44,7 @@ export const TasteQuiz: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/15 pb-4">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#E88C38] text-white shadow-sm">
-                <Sparkles className="h-5 w-5" />
+                <HelpCircle className="h-5 w-5" />
               </span>
               <div>
                 <h3 className="font-['Playfair_Display',serif] text-xl sm:text-2xl font-bold">
@@ -62,7 +60,7 @@ export const TasteQuiz: React.FC = () => {
               <button
                 type="button"
                 onClick={resetQuiz}
-                className="inline-flex items-center gap-1.5 text-xs text-[#F2DFD3] hover:text-white font-semibold"
+                className="inline-flex items-center gap-1.5 text-xs text-[#F2DFD3] hover:text-white font-semibold cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Ulangi Pilihan</span>
@@ -78,19 +76,27 @@ export const TasteQuiz: React.FC = () => {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {moods.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => handleSelectMood(m.id)}
-                    className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 hover:border-[#E88C38] text-left transition-all hover:scale-102 flex flex-col justify-between space-y-2 group"
-                  >
-                    <span className="text-sm font-bold text-white group-hover:text-[#FAD082] transition-colors">
-                      {m.label}
-                    </span>
-                    <span className="text-xs text-[#D9C4B6]">{m.desc}</span>
-                  </button>
-                ))}
+                {moods.map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => handleSelectMood(m.id)}
+                      className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 hover:border-[#E88C38] text-left transition-all hover:scale-102 flex flex-col justify-between space-y-3 group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 rounded-lg bg-white/10 text-[#FAD082] group-hover:bg-[#E88C38] group-hover:text-white transition-colors">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-bold text-white group-hover:text-[#FAD082] transition-colors">
+                          {m.label}
+                        </span>
+                      </div>
+                      <span className="text-xs text-[#D9C4B6] pl-10">{m.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -123,7 +129,7 @@ export const TasteQuiz: React.FC = () => {
                       const el = document.getElementById('interactive-3d-experience');
                       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-colors"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs transition-colors cursor-pointer"
                   >
                     Lihat 3D
                   </button>
@@ -134,7 +140,7 @@ export const TasteQuiz: React.FC = () => {
                       addToCart(recommendedId, 5);
                       showToast('5 pcs rasa rekomendasi dimasukkan ke keranjang!', 'success');
                     }}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Heart className="h-3.5 w-3.5 fill-white" />
                     <span>+ Tambah 5 Pcs ke Pesanan</span>

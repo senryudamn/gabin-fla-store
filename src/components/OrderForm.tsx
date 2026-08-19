@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
-import { ShoppingCart, Send, Calendar, Clock, MapPin, Sparkles, CheckCircle, Info, Plus, Minus, AlertCircle, Copy, Check } from 'lucide-react';
+import { 
+  ShoppingCart, Send, Calendar, Clock, MapPin, Sparkles, CheckCircle, 
+  Info, Plus, Minus, AlertCircle, Copy, Check, Lightbulb, CreditCard, Handshake 
+} from 'lucide-react';
 
 export const OrderForm: React.FC = () => {
   const {
@@ -77,7 +80,6 @@ export const OrderForm: React.FC = () => {
     });
 
     if (result) {
-      // Fire confetti celebration
       try {
         confetti({
           particleCount: 120,
@@ -85,9 +87,7 @@ export const OrderForm: React.FC = () => {
           origin: { y: 0.6 },
           colors: ['#E88C38', '#F5B056', '#3B281B', '#E53E3E', '#38A169'],
         });
-      } catch (err) {
-        // Fallback gracefully if confetti canvas fails
-      }
+      } catch (err) {}
 
       setSuccessOrderData({
         orderCode: result.order.orderCode,
@@ -96,7 +96,6 @@ export const OrderForm: React.FC = () => {
         dp: result.order.dpAmount,
       });
 
-      // Reset form
       setCustomerName('');
       setWhatsappNumber('');
       setNotes('');
@@ -117,7 +116,6 @@ export const OrderForm: React.FC = () => {
   return (
     <section id="order-section" className="py-14 sm:py-20 bg-gradient-to-b from-[#FFFDF9] via-[#FFF5EB] to-[#FFF9F2] border-t border-[#F2DECC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Heading */}
         <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3E6] border border-[#FCDDBF] px-4 py-1 text-xs font-bold text-[#C46A18] uppercase tracking-wider">
             <ShoppingCart className="h-3.5 w-3.5" />
@@ -164,11 +162,11 @@ export const OrderForm: React.FC = () => {
                     />
                   </div>
 
-                  <p className="text-[11px] pt-1 opacity-90">
+                  <p className="text-[11px] pt-1 opacity-90 flex items-center flex-wrap gap-1">
                     {isMinimumMet
                       ? pcsToNextDiscount === 0
-                        ? `✨ Anda telah mengaktifkan diskon kelipatan 10 pcs!`
-                        : `💡 Tambah ${pcsToNextDiscount} pcs lagi untuk mendapatkan ekstra diskon kelipatan berikutnya!`
+                        ? <><Sparkles className="h-3.5 w-3.5 text-emerald-600"/> Anda telah mengaktifkan diskon kelipatan 10 pcs!</>
+                        : <><Lightbulb className="h-3.5 w-3.5 text-amber-600"/> Tambah {pcsToNextDiscount} pcs lagi untuk mendapatkan ekstra diskon kelipatan berikutnya!</>
                       : `Minimal pemesanan adalah 10 pcs. Anda bebas mencampur rasa apa saja.`}
                   </p>
                 </div>
@@ -213,7 +211,6 @@ export const OrderForm: React.FC = () => {
                           : 'bg-[#F9F6F0] border-[#E8DFC9] opacity-60'
                       } ${!flavor.available ? 'opacity-50 pointer-events-none' : ''}`}
                     >
-                      {/* Thumbnail & Name */}
                       <div className="flex items-center gap-3 min-w-0">
                         <img
                           src={flavor.image}
@@ -236,7 +233,6 @@ export const OrderForm: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Stepper Controls */}
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {qty > 0 && (
                           <button
@@ -286,7 +282,6 @@ export const OrderForm: React.FC = () => {
                 <span>Informasi Pemesan & Pick-up</span>
               </h3>
 
-              {/* Customer Name */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#4A3427] block">
                   Nama Lengkap Pemesan <span className="text-rose-500">*</span>
@@ -302,7 +297,6 @@ export const OrderForm: React.FC = () => {
                 />
               </div>
 
-              {/* WhatsApp Number */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#4A3427] block">
                   Nomor WhatsApp Aktif <span className="text-rose-500">*</span>
@@ -318,7 +312,6 @@ export const OrderForm: React.FC = () => {
                 />
               </div>
 
-              {/* Pick-up Location Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#4A3427] flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5 text-[#E88C38]" />
@@ -338,7 +331,6 @@ export const OrderForm: React.FC = () => {
                 </select>
               </div>
 
-              {/* Date & Time Row */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[#4A3427] flex items-center gap-1">
@@ -349,11 +341,11 @@ export const OrderForm: React.FC = () => {
                     id="order-input-date"
                     type="date"
                     required
-                    min={defaultDateStr} /* Mencegah pilih hari kemarin */
+                    min={defaultDateStr} 
                     value={pickupDate}
                     onClick={(e) => {
                       try { e.currentTarget.showPicker(); } catch(err) {} 
-                    }} /* Memicu kalender ketika diklik di mana saja */
+                    }} 
                     onChange={(e) => setPickupDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#E88C38] bg-[#FFFCF8] cursor-pointer"
                   />
@@ -382,7 +374,6 @@ export const OrderForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Notes */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#4A3427] block">
                   Catatan Khusus (Opsional)
@@ -410,8 +401,8 @@ export const OrderForm: React.FC = () => {
                 </div>
 
                 {pricing.discount > 0 && (
-                  <div className="flex justify-between text-xs text-emerald-700 font-bold bg-emerald-100/60 p-1.5 rounded-lg">
-                    <span>✨ Diskon Promo:</span>
+                  <div className="flex justify-between items-center text-xs text-emerald-700 font-bold bg-emerald-100/60 p-1.5 rounded-lg">
+                    <span className="flex items-center gap-1"><Sparkles className="h-3.5 w-3.5"/> Diskon Promo:</span>
                     <span>- Rp {pricing.discount.toLocaleString('id-ID')}</span>
                   </div>
                 )}
@@ -423,13 +414,13 @@ export const OrderForm: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="pt-2 border-t border-dashed border-[#E5BA9A] space-y-1 text-xs">
+                <div className="pt-2 border-t border-dashed border-[#E5BA9A] space-y-2 text-xs">
                   <div className="flex justify-between font-bold text-[#3B281B]">
-                    <span>💳 Uang Muka (DP 50%):</span>
+                    <span className="flex items-center gap-1.5"><CreditCard className="h-4 w-4 text-[#E88C38]"/> Uang Muka (DP 50%):</span>
                     <span className="text-[#C46A18]">Rp {pricing.dp.toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between text-[#8A7160]">
-                    <span>🤝 Pelunasan saat Pick-up:</span>
+                    <span className="flex items-center gap-1.5"><Handshake className="h-4 w-4"/> Pelunasan saat Pick-up:</span>
                     <span>Rp {pricing.remaining.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
@@ -463,7 +454,6 @@ export const OrderForm: React.FC = () => {
       {successOrderData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white rounded-3xl border border-[#ECD9C7] p-6 sm:p-8 shadow-2xl space-y-5 text-center relative animate-in zoom-in-95 duration-200">
-            {/* Header Icon */}
             <div className="h-16 w-16 mx-auto rounded-full bg-emerald-100 border-2 border-emerald-300 text-emerald-600 flex items-center justify-center shadow-md animate-bounce">
               <CheckCircle className="h-9 w-9" />
             </div>
@@ -480,7 +470,6 @@ export const OrderForm: React.FC = () => {
               </p>
             </div>
 
-            {/* Order Code Box */}
             <div className="p-3.5 rounded-2xl bg-[#FFF5EC] border border-[#F5D8BF] flex items-center justify-between gap-2 text-left">
               <div>
                 <span className="text-[10px] font-bold text-[#8A7160] uppercase">Kode Pesanan:</span>
@@ -498,7 +487,6 @@ export const OrderForm: React.FC = () => {
               </button>
             </div>
 
-            {/* Price Highlights */}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 rounded-xl bg-[#F7F2ED] text-left">
                 <span className="text-[10px] text-[#7A6455] block">Total Pesanan</span>
@@ -514,7 +502,6 @@ export const OrderForm: React.FC = () => {
               </div>
             </div>
 
-            {/* WhatsApp Direct Link CTA */}
             <div className="space-y-2 pt-2">
               <a
                 id="modal-wa-direct-btn"

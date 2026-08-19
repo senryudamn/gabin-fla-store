@@ -76,8 +76,8 @@ export const HeroSection: React.FC = () => {
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-[#3B281B]">Fresh Oven</p>
-                  <p className="text-[11px] text-[#8C7362]">Panggang tiap hari</p>
+                  <p className="text-xs font-bold text-[#3B281B]">Fresh</p>
+                  <p className="text-[11px] text-[#8C7362]">menjaga kualitas terbaik</p>
                 </div>
               </div>
 
