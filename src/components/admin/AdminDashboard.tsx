@@ -185,8 +185,8 @@ export const AdminDashboard: React.FC = () => {
         address: '',
         city: 'Yogyakarta',
         subdistrict: '',
-        phone: '+62 812-3456-7890',
-        whatsapp: '6281234567890',
+        phone: '+62 823-1172-4554',
+        whatsapp: '6282311724554',
         hours: 'Senin - Minggu: 09.00 - 19.00 WIB',
         mapsUrl: 'https://maps.google.com',
         mapsEmbedQuery: 'Yogyakarta',
@@ -523,28 +523,41 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions (Dengan proteksi rasa bawaan) */}
                   <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#F2E4D8]">
                     <button
                       type="button"
                       onClick={() => handleOpenFlavorModal(flavor)}
-                      className="px-3 py-1.5 rounded-xl bg-[#FFF5EB] hover:bg-[#FBECE0] text-xs font-bold text-[#6B513F] flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-[#FFF5EB] hover:bg-[#FBECE0] text-xs font-bold text-[#6B513F] flex items-center gap-1.5 cursor-pointer"
                     >
                       <Edit className="h-3.5 w-3.5 text-[#E88C38]" />
                       <span>Edit</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm(`Yakin ingin menghapus varian ${flavor.name}?`)) {
-                          deleteFlavor(flavor.id);
-                        }
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 flex items-center gap-1.5"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Hapus</span>
-                    </button>
+
+                    {['classic-vanilla', 'espresso-blend', 'kyoto-matcha', 'red-velvet', 'mixed-berry', 'dark-chocolate'].includes(flavor.id) ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-3 py-1.5 rounded-xl bg-stone-100 text-xs font-bold text-stone-400 flex items-center gap-1.5 cursor-not-allowed"
+                        title="Varian bawaan tidak bisa dihapus, hanya bisa dinonaktifkan"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Bawaan</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Yakin ingin menghapus varian ${flavor.name}?`)) {
+                            deleteFlavor(flavor.id);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Hapus</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -620,7 +633,7 @@ export const AdminDashboard: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenLocationModal(loc)}
-                      className="px-3 py-1.5 rounded-xl bg-[#FFF5EB] hover:bg-[#FBECE0] text-xs font-bold text-[#6B513F] flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-[#FFF5EB] hover:bg-[#FBECE0] text-xs font-bold text-[#6B513F] flex items-center gap-1.5 cursor-pointer"
                     >
                       <Edit className="h-3.5 w-3.5 text-[#E88C38]" />
                       <span>Edit Cabang</span>
@@ -633,7 +646,7 @@ export const AdminDashboard: React.FC = () => {
                             deleteLocation(loc.id);
                           }
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 flex items-center gap-1.5"
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 flex items-center gap-1.5 cursor-pointer"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         <span>Hapus</span>
@@ -708,7 +721,7 @@ export const AdminDashboard: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenDiscountModal(rule)}
-                      className="px-3 py-1.5 rounded-xl bg-[#FFF5EB] hover:bg-[#FBECE0] text-xs font-bold text-[#6B513F] flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-[#FFF5EB] hover:bg-[#FBECE0] text-xs font-bold text-[#6B513F] flex items-center gap-1.5 cursor-pointer"
                     >
                       <Edit className="h-3.5 w-3.5 text-[#E88C38]" />
                       <span>Edit Aturan</span>
@@ -720,7 +733,7 @@ export const AdminDashboard: React.FC = () => {
                           deleteDiscountRule(rule.id);
                         }
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 flex items-center gap-1.5 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Hapus</span>
@@ -748,7 +761,7 @@ export const AdminDashboard: React.FC = () => {
                   id="btn-export-csv"
                   type="button"
                   onClick={exportOrdersCSV}
-                  className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-white border border-[#ECD3BC] hover:bg-[#FFF5EB] text-xs font-bold text-[#4A3324] shadow-xs transition-all"
+                  className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-white border border-[#ECD3BC] hover:bg-[#FFF5EB] text-xs font-bold text-[#4A3324] shadow-xs transition-all cursor-pointer"
                 >
                   <Download className="h-4 w-4 text-[#E88C38]" />
                   <span>Export CSV</span>
@@ -771,7 +784,7 @@ export const AdminDashboard: React.FC = () => {
                   key={st.key}
                   type="button"
                   onClick={() => setOrderStatusFilter(st.key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
                     orderStatusFilter === st.key
                       ? 'bg-[#3B281B] text-white'
                       : 'bg-white text-[#664F40] border border-[#ECD7C4] hover:bg-[#FFF5EB]'
@@ -867,7 +880,7 @@ export const AdminDashboard: React.FC = () => {
                               onChange={(e) =>
                                 updateOrderStatus(order.id, e.target.value as OrderStatus)
                               }
-                              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border ${
+                              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${
                                 order.status === 'selesai'
                                   ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                                   : order.status === 'siap_diambil'
@@ -897,7 +910,7 @@ export const AdminDashboard: React.FC = () => {
                                   deleteOrder(order.id);
                                 }
                               }}
-                              className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                              className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                               title="Hapus Pesanan"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1053,7 +1066,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 5: MANAJEMEN MITRA & B2B */}
+        {/* TAB 6: MANAJEMEN MITRA & B2B */}
         {adminTab === 'partners' && <AdminPartnershipManager />}
       </main>
 
@@ -1068,7 +1081,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setFlavorModalOpen(false)}
-                className="p-1 text-stone-400 hover:text-stone-700"
+                className="p-1 text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1161,7 +1174,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="font-bold text-[#4A3427]">Badge Label (Opsional)</label>
                   <input
                     type="text"
-                    placeholder="Contoh: Best Seller"
+                    placeholder="Contoh: Best Seller / Coming Soon"
                     value={flavorForm.badge}
                     onChange={(e) => setFlavorForm({ ...flavorForm, badge: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8]"
@@ -1183,13 +1196,13 @@ export const AdminDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setFlavorModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#664F40]"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#664F40] cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white text-xs font-bold shadow-md"
+                  className="px-5 py-2 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white text-xs font-bold shadow-md cursor-pointer"
                 >
                   Simpan Varian
                 </button>
@@ -1210,7 +1223,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(false)}
-                className="p-1 text-stone-400 hover:text-stone-700"
+                className="p-1 text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1279,13 +1292,13 @@ export const AdminDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setLocationModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#664F40]"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#664F40] cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white text-xs font-bold shadow-md"
+                  className="px-5 py-2 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white text-xs font-bold shadow-md cursor-pointer"
                 >
                   Simpan Cabang
                 </button>
@@ -1306,7 +1319,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setDiscountModalOpen(false)}
-                className="p-1 text-stone-400 hover:text-stone-700"
+                className="p-1 text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1371,13 +1384,13 @@ export const AdminDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setDiscountModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#664F40]"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#664F40] cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white text-xs font-bold shadow-md"
+                  className="px-5 py-2 rounded-xl bg-[#E88C38] hover:bg-[#D57924] text-white text-xs font-bold shadow-md cursor-pointer"
                 >
                   Simpan Diskon
                 </button>

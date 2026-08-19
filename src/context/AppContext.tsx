@@ -86,10 +86,9 @@ interface AppContextType {
   adminTab: 'menu' | 'locations' | 'discounts' | 'orders' | 'partners' | 'analytics';
   setAdminTab: (tab: 'menu' | 'locations' | 'discounts' | 'orders' | 'partners' | 'analytics') => void;
 
-  // Admin Auth
+  // Admin Auth (Hanya menggunakan Google Firebase)
   adminUser: AdminUser | null;
-  loginAdmin: (email: string, pass: string) => boolean;
-  loginWithGoogle: (customEmail?: string, customName?: string) => void;
+  loginWithGoogle: () => void;
   logoutAdmin: () => void;
 
   // CMS Management Actions
@@ -211,9 +210,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const unsubs: (() => void)[] = [];
 
+    // Menggabungkan 6 rasa bawaan (built-in) dengan data dari Firebase
     unsubs.push(onSnapshot(collection(db, 'flavors'), (snap) => {
-      if (!snap.empty) setFlavors(snap.docs.map(d => d.data() as Flavor));
+      const baseFlavorsMap = new Map(INITIAL_FLAVORS.map(f => [f.id, f]));
+      
+      if (!snap.empty) {
+        snap.docs.forEach(d => {
+          const data = d.data() as Flavor;
+          baseFlavorsMap.set(data.id, data);
+        });
+      }
+      
+      setFlavors(Array.from(baseFlavorsMap.values()));
     }));
+    
     unsubs.push(onSnapshot(collection(db, 'discountRules'), (snap) => {
       if (!snap.empty) setDiscountRules(snap.docs.map(d => d.data() as DiscountRule));
     }));
@@ -249,8 +259,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         setAdminUser(adminData);
       } else {
-        // Hanya reset jika provider adalah google (mempertahankan login manual mockup)
-        setAdminUser((prev) => (prev?.provider === 'google' ? null : prev));
+        setAdminUser(null); // Membersihkan cache jika Firebase menyatakan user log out
       }
     });
     return () => unsubscribe();
@@ -543,31 +552,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     }
   };
 
-  // Email & Password Auth Handler
-  const loginAdmin = (email: string, pass: string) => {
-    const cleanEmail = email.trim().toLowerCase();
-
-    if (
-      cleanEmail === 'akbariimam8@gmail.com' ||
-      cleanEmail === 'admin@gabin.id' ||
-      cleanEmail === 'owner@gabin.id' ||
-      cleanEmail === 'demo@gabin.id'
-    ) {
-      const user: AdminUser = {
-        email: email.trim(),
-        name: cleanEmail === 'akbariimam8@gmail.com' ? 'Akbari Imam' : 'Admin Dapur Pusat',
-        role: 'owner',
-        provider: 'email',
-      };
-      setAdminUser(user);
-      setView('admin-dashboard');
-      showToast(`Selamat datang, ${user.name}!`, 'success');
-      return true;
-    }
-    showToast('Email atau kata sandi tidak valid.', 'error');
-    return false;
-  };
-
   const logoutAdmin = async () => {
     try {
       await signOut(auth);
@@ -802,7 +786,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
         adminTab,
         setAdminTab,
         adminUser,
-        loginAdmin,
         loginWithGoogle,
         logoutAdmin,
         updateFlavor,

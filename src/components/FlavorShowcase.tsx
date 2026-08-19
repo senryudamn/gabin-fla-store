@@ -123,8 +123,16 @@ export const FlavorShowcase: React.FC = () => {
                 {/* Badges */}
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                   {flavor.badge && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#E88C38] text-white px-3 py-1 text-xs font-black shadow-md uppercase tracking-wider">
-                      <Flame className="h-3.5 w-3.5" />
+                    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black shadow-md uppercase tracking-wider ${
+                      flavor.badge.toLowerCase().includes('coming soon') || flavor.badge.toLowerCase().includes('segera hadir')
+                        ? 'bg-[#3B281B] text-[#FAD082]' 
+                        : 'bg-[#E88C38] text-white'
+                    }`}>
+                      {flavor.badge.toLowerCase().includes('coming soon') || flavor.badge.toLowerCase().includes('segera hadir') ? (
+                        <Sparkles className="h-3.5 w-3.5" />
+                      ) : (
+                        <Flame className="h-3.5 w-3.5" />
+                      )}
                       {flavor.badge}
                     </span>
                   )}
@@ -226,14 +234,25 @@ export const FlavorShowcase: React.FC = () => {
                   )}
                 </div>
 
-                {/* Action Area: Add to Cart / Quantity Stepper */}
+                {/* Action Area: Add to Cart / Quantity Stepper / Coming Soon */}
                 <div className="pt-3 border-t border-[#F0DFD1]">
                   {!flavor.available ? (
                     <button
                       disabled
-                      className="w-full py-2.5 rounded-2xl bg-stone-200 text-stone-500 font-bold text-xs cursor-not-allowed"
+                      className={`w-full py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed transition-all ${
+                        flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir')
+                          ? 'bg-[#3B281B] text-[#FAD082] shadow-md border border-[#FAD082]/30'
+                          : 'bg-stone-200 text-stone-500'
+                      }`}
                     >
-                      Stok Habis Sementara
+                      {flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir') ? (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          <span>Segera Hadir</span>
+                        </>
+                      ) : (
+                        'Stok Habis Sementara'
+                      )}
                     </button>
                   ) : qtyInCart > 0 ? (
                     <div className="flex items-center justify-between bg-[#FFF5EC] border border-[#F5D8BF] p-1.5 rounded-2xl">
