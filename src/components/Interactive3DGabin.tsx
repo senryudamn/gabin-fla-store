@@ -368,7 +368,7 @@ export const Interactive3DGabin: React.FC = () => {
   const isComingSoon = !isAvailable && (previewFlavor?.badge?.toLowerCase().includes('coming soon') || previewFlavor?.badge?.toLowerCase().includes('segera hadir'));
 
   return (
-    <div id="interactive-3d-experience" className="relative w-full rounded-3xl bg-gradient-to-b from-[#FFF5EB] via-[#FFF9F2] to-[#FFF1DE] border border-[#F2DECC] p-4 sm:p-6 shadow-xl overflow-hidden w-full">
+    <div id="interactive-3d-experience" className="relative w-full rounded-3xl bg-gradient-to-b from-[#FFF5EB] via-[#FFF9F2] to-[#FFF1DE] border border-[#F2DECC] p-4 sm:p-6 shadow-xl overflow-hidden">
       {/* Decorative ambient color glow matching active flavor */}
       <div
         className="absolute inset-0 pointer-events-none opacity-45 transition-colors duration-700 blur-3xl"
@@ -495,12 +495,13 @@ export const Interactive3DGabin: React.FC = () => {
         className="relative z-0 h-64 sm:h-80 w-full cursor-grab active:cursor-grabbing touch-none select-none my-1"
       />
 
-      {/* Bottom Interactive Flavor Switcher & Quick Add */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pt-3 border-t border-[#EED7C2]/80 w-full">
-        {/* Active Flavor Badge - Diberi min-w-0 agar teks panjang otomatis terpotong (truncate) */}
-        <div className="flex items-center gap-3 w-full lg:w-1/2 min-w-0">
+      {/* Bottom Interactive Flavor Switcher & Quick Add (Bebas Meluber!) */}
+      <div className="relative z-10 flex flex-col gap-4 pt-4 mt-2 border-t border-[#EED7C2]/80 w-full">
+        
+        {/* ROW 1: Active Flavor Information */}
+        <div className="flex items-center gap-3 w-full min-w-0">
           <div
-            className="h-10 w-10 rounded-2xl border-2 border-white shadow-md flex-shrink-0 flex items-center justify-center font-bold text-xs"
+            className="h-11 w-11 rounded-2xl border-2 border-white shadow-md flex-shrink-0 flex items-center justify-center font-bold text-xs"
             style={{
               backgroundColor: previewFlavor?.flaColorHex || '#E88C38',
               color: ['classic-vanilla'].includes(previewFlavor?.id || '') ? '#3B281B' : '#FFFFFF',
@@ -512,22 +513,24 @@ export const Interactive3DGabin: React.FC = () => {
             <h4 className="text-sm font-bold text-[#3B281B] truncate" title={previewFlavor?.name}>
               {previewFlavor?.name || 'Pilih Varian'}
             </h4>
-            <p className="text-xs text-[#8A6F5C] truncate" title={`${previewFlavor?.subtitle} • Rp ${previewFlavor?.price.toLocaleString('id-ID')} / pcs`}>
-              {previewFlavor?.subtitle} • Rp {previewFlavor?.price.toLocaleString('id-ID')} / pcs
+            <p className="text-xs text-[#8A6F5C] truncate" title={`${previewFlavor?.subtitle} • Rp ${previewFlavor?.price?.toLocaleString('id-ID')} / pcs`}>
+              {previewFlavor?.subtitle} • Rp {previewFlavor?.price?.toLocaleString('id-ID')} / pcs
             </p>
           </div>
         </div>
 
-        {/* Flavor Pills & Quick Add to Order - Button dipisah agar tidak tergusur scroll */}
-        <div className="flex items-center justify-end w-full lg:w-1/2 gap-2 min-w-0">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-1 lg:flex-none py-1">
+        {/* ROW 2: Flavor Selection Pills & Action Button */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full min-w-0">
+          
+          {/* Scrollable Pills Container */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 pr-2 w-full">
             {flavors.slice(0, 5).map((flv) => (
               <button
                 key={flv.id}
                 id={`switch-3d-flavor-${flv.id}`}
                 type="button"
                 onClick={() => setPreviewFlavorId(flv.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex-shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex-shrink-0 ${
                   previewFlavor?.id === flv.id
                     ? 'bg-[#3B281B] text-white border-[#3B281B] shadow-md scale-105'
                     : 'bg-white/90 text-[#5C4537] border-[#ECD7C4] hover:bg-[#FAF0E6]'
@@ -542,14 +545,14 @@ export const Interactive3DGabin: React.FC = () => {
             ))}
           </div>
 
-          {/* Dinamis merespon status Habis / Coming Soon */}
+          {/* Action Button */}
           <button
             type="button"
             disabled={!isAvailable}
             onClick={() => {
               if (isAvailable && previewFlavor) addToCart(previewFlavor.id, 1);
             }}
-            className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all whitespace-nowrap flex-shrink-0 ml-1 ${
+            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all whitespace-nowrap flex-shrink-0 w-full sm:w-auto ${
               isAvailable
                 ? 'bg-[#E88C38] hover:bg-[#D57924] text-white active:scale-95 cursor-pointer'
                 : isComingSoon
@@ -559,19 +562,20 @@ export const Interactive3DGabin: React.FC = () => {
           >
             {isComingSoon ? (
               <>
-                <Sparkles className="h-3 w-3 text-[#FAD082]" />
+                <Sparkles className="h-4 w-4 text-[#FAD082]" />
                 <span>Segera Hadir</span>
               </>
             ) : !isAvailable ? (
-              <span>Stok Habis</span>
+              <span>Stok Habis Sementara</span>
             ) : (
               <>
-                <Heart className="h-3 w-3 fill-white" />
+                <Heart className="h-4 w-4 fill-white" />
                 <span>+ Pesan Rasa Ini</span>
               </>
             )}
           </button>
         </div>
+
       </div>
     </div>
   );
