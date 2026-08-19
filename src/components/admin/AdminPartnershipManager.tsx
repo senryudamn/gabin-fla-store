@@ -60,12 +60,12 @@ export const AdminPartnershipManager: React.FC = () => {
   const [approveDailyPcs, setApproveDailyPcs] = useState<number>(30);
   const [approveSchedule, setApproveSchedule] = useState<string>('Setiap Hari - Pukul 07.30 WIB');
 
-  // New Tier Form State
+  // New Tier Form State (Disederhanakan menjadi Classic & Special/Signature)
   const [tierForm, setTierForm] = useState<Omit<PartnerPricingTier, 'id'>>({
     tierName: '',
     category: 'angkringan',
     priceClassic: 2300,
-    pricePremium: 2800,
+    pricePremium: 3200,
     priceSpecial: 3200,
     suggestedRetailPrice: 3500,
     estimatedMarginPercent: 35,
@@ -112,20 +112,27 @@ export const AdminPartnershipManager: React.FC = () => {
   const handleSaveTier = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Membersihkan array fasilitas (menghilangkan spasi berlebih dan string kosong)
     const cleanFacilities = (editingTier ? editingTier.freeFacilities : tierForm.freeFacilities)
       .map(f => f.trim())
       .filter(Boolean);
 
     if (editingTier) {
-      updatePartnerTier({ ...editingTier, freeFacilities: cleanFacilities });
+      updatePartnerTier({
+        ...editingTier,
+        pricePremium: editingTier.priceSpecial, // Sinkronisasi otomatis
+        freeFacilities: cleanFacilities,
+      });
       setEditingTier(null);
     } else if (isAddingTier) {
       if (!tierForm.tierName.trim()) {
         showToast('Nama tier tidak boleh kosong', 'warning');
         return;
       }
-      addPartnerTier({ ...tierForm, freeFacilities: cleanFacilities });
+      addPartnerTier({
+        ...tierForm,
+        pricePremium: tierForm.priceSpecial,
+        freeFacilities: cleanFacilities,
+      });
       setIsAddingTier(false);
     }
   };
@@ -156,8 +163,6 @@ export const AdminPartnershipManager: React.FC = () => {
     let text = `📦 *REKAP PENGIRIMAN SUPLAI HARIAN GABIN FLA*\n📅 Tanggal: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n\n`;
     partners.forEach((p, idx) => {
       if (p.status !== 'active') return;
-      const tier = partnerTiers.find((t) => t.id === p.tierId);
-      const estPrice = tier ? tier.priceClassic : 2300;
       text += `${idx + 1}. *${p.businessName}* (${p.category.toUpperCase()})\n`;
       text += `   • Alamat: ${p.address}\n`;
       text += `   • Jumlah Suplai: ${p.dailySupplyPcs} pcs\n`;
@@ -193,7 +198,7 @@ export const AdminPartnershipManager: React.FC = () => {
                   tierName: '',
                   category: 'angkringan',
                   priceClassic: 2300,
-                  pricePremium: 2800,
+                  pricePremium: 3200,
                   priceSpecial: 3200,
                   suggestedRetailPrice: 3500,
                   estimatedMarginPercent: 35,
@@ -351,8 +356,7 @@ export const AdminPartnershipManager: React.FC = () => {
             <div>
               <strong className="text-[#3B281B]">Informasi Penyesuaian Biaya Grosir:</strong>
               <p className="mt-0.5">
-                Setiap jenis mitra (Angkringan, Kedai Kopi, Cafe, Toko Roti) dapat memiliki harga pasokan tersendiri.
-                Sistem akan menghitung otomatis selisih margin keuntungan agar mitra mendapatkan keuntungan yang sehat.
+                Struktur harga telah disederhanakan menjadi 2 kategori utama: <strong>Classic Vanilla</strong> dan <strong>Signature Flavors</strong>[cite: 3].
               </p>
             </div>
           </div>
@@ -402,16 +406,16 @@ export const AdminPartnershipManager: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Pricing Matrix Table */}
+                  {/* Pricing Matrix Table (2 Kolom: Classic & Signature) */}
                   <div className="bg-[#FFFDF9] rounded-2xl p-4 border border-[#F2E5D8] space-y-2.5">
                     <div className="text-[11px] font-bold text-[#8C6D58] uppercase tracking-wider">
-                      Penyesuaian Biaya per Varian Rasa:
+                      Penyesuaian Biaya per Kategori Rasa:
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2 bg-white rounded-xl border border-[#ECD9C8]">
-                        <p className="text-[10px] text-[#8C7362]">Classic</p>
-                        <p className="text-xs font-black text-[#321F13]">
+                    <div className="grid grid-cols-2 gap-3 text-center">
+                      <div className="p-2.5 bg-white rounded-xl border border-[#ECD9C8]">
+                        <p className="text-[10px] text-[#8C7362] font-semibold">Classic Vanilla</p>
+                        <p className="text-sm font-black text-[#321F13] my-0.5">
                           Rp {tier.priceClassic.toLocaleString('id-ID')}
                         </p>
                         <p className="text-[9px] text-emerald-600 font-semibold">
@@ -419,23 +423,13 @@ export const AdminPartnershipManager: React.FC = () => {
                         </p>
                       </div>
 
-                      <div className="p-2 bg-white rounded-xl border border-[#ECD9C8]">
-                        <p className="text-[10px] text-[#8C7362]">Premium</p>
-                        <p className="text-xs font-black text-[#321F13]">
-                          Rp {tier.pricePremium.toLocaleString('id-ID')}
-                        </p>
-                        <p className="text-[9px] text-emerald-600 font-semibold">
-                          (Normal Rp 4.000)
-                        </p>
-                      </div>
-
-                      <div className="p-2 bg-white rounded-xl border border-[#ECD9C8]">
-                        <p className="text-[10px] text-[#8C7362]">Special</p>
-                        <p className="text-xs font-black text-[#321F13]">
+                      <div className="p-2.5 bg-white rounded-xl border border-[#ECD9C8]">
+                        <p className="text-[10px] text-[#8C7362] font-semibold">Signature Flavors</p>
+                        <p className="text-sm font-black text-[#321F13] my-0.5">
                           Rp {tier.priceSpecial.toLocaleString('id-ID')}
                         </p>
                         <p className="text-[9px] text-emerald-600 font-semibold">
-                          (Normal Rp 4.500)
+                          (Normal Rp 4.000 - 4.500)
                         </p>
                       </div>
                     </div>
@@ -492,7 +486,6 @@ export const AdminPartnershipManager: React.FC = () => {
       {/* ========================================================================= */}
       {activeSubTab === 'partners' && (
         <div className="space-y-6">
-          {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#ECD9C8]">
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
@@ -520,7 +513,6 @@ export const AdminPartnershipManager: React.FC = () => {
             </div>
           </div>
 
-          {/* Partners Table / Cards */}
           <div className="space-y-4">
             {filteredPartners.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-3xl border border-[#ECD9C8] space-y-2">
@@ -536,7 +528,6 @@ export const AdminPartnershipManager: React.FC = () => {
                     key={partner.id}
                     className="bg-white rounded-3xl border border-[#ECD9C8] p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-5"
                   >
-                    {/* Left: Info */}
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-base text-[#321F13]">
@@ -586,7 +577,6 @@ export const AdminPartnershipManager: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Right: Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-[#F5E6D8]">
                       <a
                         href={`https://wa.me/${partner.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
@@ -595,7 +585,6 @@ export const AdminPartnershipManager: React.FC = () => {
                         target="_blank"
                         rel="noreferrer"
                         className="px-3.5 py-2 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366] text-[#128C7E] hover:text-white border border-[#25D366]/30 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                        title="Kirim Chat WhatsApp"
                       >
                         <MessageCircle className="h-4 w-4" />
                         <span>Chat WA</span>
@@ -605,7 +594,6 @@ export const AdminPartnershipManager: React.FC = () => {
                         type="button"
                         onClick={() => setEditingPartner(partner)}
                         className="p-2 rounded-xl bg-stone-100 hover:bg-[#FFF5EB] hover:text-[#C46A18] text-stone-700 transition-colors cursor-pointer"
-                        title="Edit Data Mitra & Penyesuaian Biaya"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
@@ -618,7 +606,6 @@ export const AdminPartnershipManager: React.FC = () => {
                           }
                         }}
                         className="p-2 rounded-xl bg-stone-100 hover:bg-rose-50 hover:text-rose-600 text-stone-400 transition-colors cursor-pointer"
-                        title="Hapus Mitra"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -707,7 +694,6 @@ export const AdminPartnershipManager: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Actions */}
                   <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
                     <a
                       href={`https://wa.me/${app.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
@@ -780,7 +766,6 @@ export const AdminPartnershipManager: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {partners.map((p) => {
               if (p.status !== 'active') return null;
-              const tier = partnerTiers.find((t) => t.id === p.tierId);
 
               return (
                 <div
@@ -825,7 +810,7 @@ export const AdminPartnershipManager: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: EDIT / ADD TIER */}
+      {/* MODAL 1: EDIT / ADD TIER (Disederhanakan 2 Kolom Harga) */}
       {/* ========================================================================= */}
       {(editingTier || isAddingTier) && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
@@ -897,10 +882,10 @@ export const AdminPartnershipManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* Wholesale Prices */}
+              {/* Wholesale Prices (2 Kolom: Classic & Signature) */}
               <div className="bg-[#FFFDF9] p-4 rounded-2xl border border-[#F2E5D8] space-y-3">
-                <p className="text-xs font-bold text-[#8C6D58]">Harga Grosir Pasokan per Varian (Rp/pcs):</p>
-                <div className="grid grid-cols-3 gap-3">
+                <p className="text-xs font-bold text-[#8C6D58]">Harga Grosir Pasokan per Kategori (Rp/pcs):</p>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[11px] font-semibold text-stone-600">Varian Classic</label>
                     <input
@@ -912,37 +897,22 @@ export const AdminPartnershipManager: React.FC = () => {
                         if (editingTier) setEditingTier({ ...editingTier, priceClassic: val });
                         else setTierForm({ ...tierForm, priceClassic: val });
                       }}
-                      className="w-full px-2.5 py-2 rounded-xl bg-white border border-[#E0CCBC] text-xs font-bold text-[#3B281B]"
+                      className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E0CCBC] text-sm font-bold text-[#3B281B]"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-stone-600">Varian Premium</label>
-                    <input
-                      type="number"
-                      step="100"
-                      value={editingTier ? editingTier.pricePremium : tierForm.pricePremium}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        if (editingTier) setEditingTier({ ...editingTier, pricePremium: val });
-                        else setTierForm({ ...tierForm, pricePremium: val });
-                      }}
-                      className="w-full px-2.5 py-2 rounded-xl bg-white border border-[#E0CCBC] text-xs font-bold text-[#3B281B]"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-stone-600">Varian Special</label>
+                    <label className="text-[11px] font-semibold text-stone-600">Varian Signature</label>
                     <input
                       type="number"
                       step="100"
                       value={editingTier ? editingTier.priceSpecial : tierForm.priceSpecial}
                       onChange={(e) => {
                         const val = Number(e.target.value);
-                        if (editingTier) setEditingTier({ ...editingTier, priceSpecial: val });
-                        else setTierForm({ ...tierForm, priceSpecial: val });
+                        if (editingTier) setEditingTier({ ...editingTier, priceSpecial: val, pricePremium: val });
+                        else setTierForm({ ...tierForm, priceSpecial: val, pricePremium: val });
                       }}
-                      className="w-full px-2.5 py-2 rounded-xl bg-white border border-[#E0CCBC] text-xs font-bold text-[#3B281B]"
+                      className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E0CCBC] text-sm font-bold text-[#3B281B]"
                     />
                   </div>
                 </div>

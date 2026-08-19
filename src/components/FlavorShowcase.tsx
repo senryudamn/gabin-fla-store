@@ -4,11 +4,16 @@ import { Plus, Minus, Eye, Sparkles, ShoppingBag, Flame, Award, AlertCircle } fr
 
 export const FlavorShowcase: React.FC = () => {
   const { flavors, addToCart, cart, updateCartQuantity, setPreviewFlavorId, canAddFlavor, selectedFlavorCount, showToast } = useApp();
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'classic' | 'premium' | 'special'>('all');
+  
+  // State diubah untuk menampung hanya 'classic' dan 'special' (sebagai representasi Signature)
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'classic' | 'special'>('all');
 
   const filteredFlavors = flavors.filter((f) => {
     if (selectedCategory === 'all') return true;
-    return f.category === selectedCategory;
+    if (selectedCategory === 'classic') return f.category === 'classic';
+    // Otomatis menggabungkan data lama (premium/special) menjadi satu di bawah Signature Flavors
+    if (selectedCategory === 'special') return f.category === 'special' || f.category === 'premium';
+    return false;
   });
 
   const getCartQuantity = (flavorId: string) => {
@@ -45,7 +50,7 @@ export const FlavorShowcase: React.FC = () => {
           <span>Varian Aktif di Kotak: <strong>{selectedFlavorCount}/2 Rasa</strong></span>
         </div>
 
-        {/* Category Filter Pills */}
+        {/* Category Filter Pills (Telah disederhanakan menjadi 2 Kategori) */}
         <div className="flex items-center justify-center gap-2 pt-4 flex-wrap">
           <button
             id="filter-flavor-all"
@@ -69,19 +74,7 @@ export const FlavorShowcase: React.FC = () => {
                 : 'bg-white text-[#664F40] border border-[#ECD7C4] hover:bg-[#FFF5EB]'
             }`}
           >
-            Classic Custard
-          </button>
-          <button
-            id="filter-flavor-premium"
-            type="button"
-            onClick={() => setSelectedCategory('premium')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              selectedCategory === 'premium'
-                ? 'bg-[#3B281B] text-white shadow-md'
-                : 'bg-white text-[#664F40] border border-[#ECD7C4] hover:bg-[#FFF5EB]'
-            }`}
-          >
-            Premium Roasts
+            Classic Vanilla
           </button>
           <button
             id="filter-flavor-special"
@@ -93,7 +86,7 @@ export const FlavorShowcase: React.FC = () => {
                 : 'bg-white text-[#664F40] border border-[#ECD7C4] hover:bg-[#FFF5EB]'
             }`}
           >
-            Special Signatures
+            Signature Flavors
           </button>
         </div>
       </div>

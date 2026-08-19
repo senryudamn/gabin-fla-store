@@ -72,7 +72,7 @@ export const AdminDashboard: React.FC = () => {
   // Orders Filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
 
-  // New/Edit Flavor Form State (Ditambah status mode: 'tersedia' | 'habis' | 'coming_soon')
+  // New/Edit Flavor Form State (Disederhanakan menjadi 2 kategori)
   const [flavorForm, setFlavorForm] = useState({
     name: '',
     subtitle: '',
@@ -80,7 +80,7 @@ export const AdminDashboard: React.FC = () => {
     price: 4000,
     image: '',
     badge: '',
-    category: 'classic' as 'classic' | 'premium' | 'special',
+    category: 'classic' as 'classic' | 'special',
     flaColorHex: '#FFF4D0',
     statusMode: 'tersedia' as 'tersedia' | 'habis' | 'coming_soon',
     sweetness: 3,
@@ -110,7 +110,8 @@ export const AdminDashboard: React.FC = () => {
         price: flavor.price,
         image: flavor.image,
         badge: flavor.badge || '',
-        category: flavor.category,
+        // Otomatis mapping kategori premium lama menjadi special (Signature)
+        category: (flavor.category === 'premium' || flavor.category === 'special') ? 'special' : 'classic',
         flaColorHex: flavor.flaColorHex,
         statusMode: mode,
         sweetness: flavor.sweetness,
@@ -967,7 +968,7 @@ export const AdminDashboard: React.FC = () => {
         {adminTab === 'partners' && <AdminPartnershipManager />}
       </main>
 
-      {/* MODAL: ADD / EDIT FLAVOR (Dilengkapi Pilihan Status Mode) */}
+      {/* MODAL: ADD / EDIT FLAVOR (Dilengkapi Pilihan Status Mode & Kategori yang Disederhanakan) */}
       {flavorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
           <div className="w-full max-w-lg bg-white rounded-3xl border border-[#ECD9C7] p-6 shadow-2xl space-y-5 my-8">
@@ -985,16 +986,29 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveFlavor} className="space-y-3.5 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-[#4A3427]">Nama Varian Rasa</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Belgian Dark Chocolate"
-                  value={flavorForm.name}
-                  onChange={(e) => setFlavorForm({ ...flavorForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#4A3427]">Kategori Menu</label>
+                  <select
+                    value={flavorForm.category}
+                    onChange={(e) => setFlavorForm({ ...flavorForm, category: e.target.value as 'classic' | 'special' })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8] font-bold text-[#C46A18]"
+                  >
+                    <option value="classic">Classic Vanilla</option>
+                    <option value="special">Signature Flavors</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-[#4A3427]">Nama Varian Rasa</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Belgian Dark Chocolate"
+                    value={flavorForm.name}
+                    onChange={(e) => setFlavorForm({ ...flavorForm, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8]"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1048,7 +1062,7 @@ export const AdminDashboard: React.FC = () => {
                 />
               </div>
 
-              {/* Status Mode Selector (Baru!) */}
+              {/* Status Mode Selector */}
               <div className="space-y-1.5 p-3 rounded-2xl bg-[#FFF9F2] border border-[#F2E2D2]">
                 <label className="font-bold text-[#4A3427] block">Status Tampilan Menu</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1111,7 +1125,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="font-bold text-[#4A3427]">Badge Label (Opsional)</label>
                   <input
                     type="text"
-                    placeholder="Contoh: Best Seller"
+                    placeholder="Contoh: Best Seller / Coming Soon"
                     value={flavorForm.badge}
                     onChange={(e) => setFlavorForm({ ...flavorForm, badge: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8]"
