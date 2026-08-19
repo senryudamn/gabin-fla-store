@@ -1,0 +1,6 @@
+{
+  "name": "Gabin Isi Fla",
+  "description": "Artisanal homemade gabin fla ordering system, interactive 3D box builder, B2B wholesale partner pricing & management for cafes and angkringans, and Google-authenticated admin CMS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
