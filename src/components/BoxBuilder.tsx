@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Package, Info, CheckCircle2, Sparkles, ArrowRight, ShoppingBag, Gift, AlertCircle, RotateCcw, Plus } from 'lucide-react';
+import { Package, Info, CheckCircle2, Sparkles, ArrowRight, ShoppingBag, Gift, AlertCircle, RotateCcw, Plus, PackageCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const BoxBuilder: React.FC = () => {
