@@ -1,12 +1,14 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Sparkles, PackageCheck, RotateCcw, Plus, ArrowRight, ShoppingBag, Gift, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Package, Info, CheckCircle2, Sparkles, ArrowRight, ShoppingBag, Gift, AlertCircle, RotateCcw, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const BoxBuilder: React.FC = () => {
   const {
     flavors,
     cart,
     addToCart,
+    removeFromCart,
     updateCartQuantity,
     clearCart,
     selectedFlavorCount,
@@ -41,7 +43,6 @@ export const BoxBuilder: React.FC = () => {
   // Quick preset packs (STRICTLY MAX 2 FLAVORS PER BOX)
   const applyPreset = (presetName: string, presetItems: { [flavorId: string]: number }) => {
     clearCart();
-    // Allow state to clear before adding
     setTimeout(() => {
       Object.entries(presetItems).forEach(([id, qty]) => {
         addToCart(id, qty);
@@ -57,6 +58,17 @@ export const BoxBuilder: React.FC = () => {
     if (cartItem) {
       updateCartQuantity(piece.flavorId, cartItem.quantity - 1);
     }
+  };
+
+  const handleAddFromMenu = (flavorId: string) => {
+    if (totalPcs >= currentBoxCapacity && totalPcs % 10 === 0 && totalPcs !== 0) {
+      showToast('Kotak penuh! Lanjut order kotak berikutnya dengan menekan tombol plus.', 'info');
+    }
+    if (!canAddFlavor(flavorId)) {
+      showToast('Maksimal 2 varian rasa per kotak. Hapus varian lain dulu.', 'warning');
+      return;
+    }
+    addToCart(flavorId, 1);
   };
 
   return (
@@ -76,15 +88,15 @@ export const BoxBuilder: React.FC = () => {
           </p>
 
           {/* 2-Flavor Rule Highlight Banner */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FFF1E5] border border-[#FAD0B0] text-xs font-bold text-[#9C4B08] shadow-2xs">
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-[#FFF1E5] border border-[#FAD0B0] text-xs font-bold text-[#9C4B08] shadow-2xs mt-2">
             <AlertCircle className="h-4 w-4 text-[#E88C38] flex-shrink-0" />
             <span>
-              <strong>Aturan Kotak:</strong> 1 Kotak maksimal memilih <strong>2 Varian Rasa</strong> (misal: 5 Vanilla + 5 Robusta, atau 10 rasa sama).
+              <strong>Aturan Kotak:</strong> 1 Kotak maksimal memilih <strong>2 Varian Rasa</strong> (misal: 5 Vanilla + 5 Robusta).
             </span>
           </div>
         </div>
 
-        {/* Quick Presets Ribbon (Compliant with 2-Flavor Rule) */}
+        {/* Quick Presets Ribbon */}
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           <span className="text-xs font-bold text-[#8A7160] mr-1">Rekomendasi Paket 2 Rasa:</span>
           <button
@@ -181,7 +193,7 @@ export const BoxBuilder: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-700 transition-colors cursor-pointer"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
-                  <span>Kosongkan Kotak</span>
+                  <span className="hidden sm:inline">Kosongkan Kotak</span>
                 </button>
               )}
 
@@ -217,45 +229,38 @@ export const BoxBuilder: React.FC = () => {
                     onClick={() => piece && removeSinglePieceAtIndex(index)}
                     className={`relative aspect-square rounded-2xl border-2 transition-all flex flex-col items-center justify-center p-2 text-center group ${
                       piece
-                        ? 'bg-white border-[#E88C38] shadow-md hover:scale-105 cursor-pointer hover:border-rose-400'
+                        ? 'bg-white border-[#E88C38] shadow-md hover:scale-105 cursor-pointer hover:border-rose-400 overflow-hidden'
                         : 'bg-white/40 border-dashed border-[#DFC8B4] text-[#A68F80]'
                     }`}
                     title={piece ? `Klik untuk menghapus ${piece.flavorName} dari slot ${index + 1}` : `Slot ${index + 1} Kosong`}
                   >
-                    {/* Slot Number Stamp */}
-                    <span className="absolute top-1.5 left-2 text-[10px] font-black opacity-40">
+                    <span className="absolute top-1.5 left-2 text-[10px] font-black opacity-40 z-10">
                       #{index + 1}
                     </span>
 
                     {piece ? (
-                      <>
-                        <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden shadow-2xs border border-[#ECD3BC] mb-1">
-                          <img
-                            src={piece.image}
-                            alt={piece.flavorName}
-                            referrerPolicy="no-referrer"
-                            className="h-full w-full object-cover"
-                          />
-                          {/* Fla Color Dot */}
-                          <div
-                            className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border border-white shadow-xs"
-                            style={{ backgroundColor: piece.color }}
-                          />
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="absolute inset-0"
+                      >
+                        <img src={piece.image} alt={piece.flavorName} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2 sm:p-3">
+                          <p className="text-[10px] sm:text-xs font-bold text-white leading-tight line-clamp-2">
+                            {piece.flavorName}
+                          </p>
                         </div>
-                        <span className="text-[11px] font-bold text-[#321F13] leading-tight line-clamp-1">
-                          {piece.flavorName.split(' ')[0]}
-                        </span>
-                        {/* Hover Remove Pill */}
-                        <div className="absolute inset-0 bg-rose-900/80 rounded-2xl text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-1 text-[10px] font-bold">
-                          <span>Hapus</span>
-                          <span className="text-[9px] font-normal opacity-80">dari slot</span>
+                        <div className="absolute inset-0 bg-rose-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
+                          <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                            Hapus
+                          </span>
                         </div>
-                      </>
+                      </motion.div>
                     ) : (
-                      <div className="space-y-1">
-                        <Plus className="h-5 w-5 mx-auto text-[#C8B09C]" />
-                        <span className="text-[10px] font-semibold block text-[#8C7362]">Slot Kosong</span>
-                      </div>
+                      <>
+                        <Plus className="h-5 w-5 mb-1 opacity-50" />
+                        <span className="text-[10px] font-semibold">Slot Kosong</span>
+                      </>
                     )}
                   </div>
                 );
@@ -263,16 +268,16 @@ export const BoxBuilder: React.FC = () => {
             </div>
           </div>
 
-          {/* PALETTE OF FLAVORS TO TAP AND ADD TO BOX (RESPECT 2-FLAVOR CONSTRAINT) */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
+          {/* PALETTE OF FLAVORS TO TAP AND ADD TO BOX */}
+          <div className="space-y-3 pt-2 border-t border-[#F2E2D2]">
+            <div className="flex items-center justify-between pt-4">
               <h4 className="font-bold text-xs sm:text-sm text-[#321F13] uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-[#E88C38]" />
                 <span>Pilih Varian (Maks. 2 Rasa per Kotak):</span>
               </h4>
               <span className="text-xs text-[#8A7160]">
                 {selectedFlavorCount < 2 ? (
-                  <span className="text-emerald-700 font-semibold">Bisa tambah 1 rasa lagi</span>
+                  <span className="text-emerald-700 font-semibold">Bisa tambah rasa lagi</span>
                 ) : (
                   <span className="text-amber-800 font-semibold">Batas 2 rasa aktif tercapai</span>
                 )}
@@ -283,31 +288,28 @@ export const BoxBuilder: React.FC = () => {
               {flavors.map((flavor) => {
                 const isAllowed = canAddFlavor(flavor.id);
                 const currentQty = cart.find((c) => c.flavorId === flavor.id)?.quantity || 0;
+                
+                // Cek status "Coming Soon"
+                const isComingSoon = !flavor.available && (flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir'));
+                const isDisabled = !flavor.available || (!isAllowed && currentQty === 0);
 
                 return (
                   <button
                     key={flavor.id}
                     id={`box-add-flavor-${flavor.id}`}
                     type="button"
-                    onClick={() => {
-                      if (!isAllowed) {
-                        showToast(
-                          'Satu kotak maksimal 2 varian rasa. Hapus salah satu varian yang ada jika ingin memilih rasa ini.',
-                          'warning'
-                        );
-                        return;
-                      }
-                      addToCart(flavor.id, 1);
-                    }}
-                    className={`flex flex-col items-center p-3 rounded-2xl border transition-all text-center relative group ${
-                      isAllowed
-                        ? 'bg-white hover:bg-[#FFF5EB] border-[#ECD7C4] hover:border-[#E88C38] shadow-2xs hover:shadow-md active:scale-95 cursor-pointer'
-                        : 'bg-[#F9F6F0] border-[#E8DFC9] opacity-60 cursor-not-allowed'
+                    disabled={isDisabled}
+                    onClick={() => handleAddFromMenu(flavor.id)}
+                    className={`flex flex-col items-center p-3 rounded-2xl border transition-all text-center relative group overflow-hidden ${
+                      currentQty > 0
+                        ? 'bg-[#FFF9F2] border-[#E88C38]/50 shadow-2xs hover:border-[#E88C38] cursor-pointer'
+                        : isDisabled
+                        ? 'bg-[#F9F6F0] border-[#E8DFC9] opacity-60 cursor-not-allowed'
+                        : 'bg-white hover:bg-[#FFF5EB] border-[#ECD7C4] hover:border-[#E88C38] shadow-2xs hover:shadow-md active:scale-95 cursor-pointer'
                     }`}
                   >
-                    {/* Selected Count Indicator Badge */}
                     {currentQty > 0 && (
-                      <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E88C38] text-white px-1 text-[10px] font-black shadow-xs">
+                      <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E88C38] text-white px-1 text-[10px] font-black shadow-xs z-20">
                         {currentQty}
                       </span>
                     )}
@@ -317,30 +319,45 @@ export const BoxBuilder: React.FC = () => {
                         src={flavor.image}
                         alt={flavor.name}
                         referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover"
+                        className={`h-full w-full object-cover ${isDisabled ? 'grayscale opacity-70' : ''}`}
                       />
                       <div
-                        className="absolute bottom-1 right-1 h-3 w-3 rounded-full border border-white"
+                        className="absolute bottom-1 right-1 h-3 w-3 rounded-full border border-white z-20"
                         style={{ backgroundColor: flavor.flaColorHex }}
                       />
+                      
+                      {/* OVERLAY GARIS DIAGONAL UNTUK COMING SOON */}
+                      {isComingSoon && (
+                        <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,var(--tw-gradient-from)_0px,var(--tw-gradient-from)_4px,var(--tw-gradient-to)_4px,var(--tw-gradient-to)_8px)] from-black/60 to-black/30 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-10" />
+                      )}
                     </div>
 
-                    <span className="text-xs font-bold text-[#321F13] line-clamp-1 group-hover:text-[#C46A18]">
-                      {flavor.name}
-                    </span>
-                    <span className="text-[11px] font-semibold text-[#C46A18] mt-0.5">
-                      Rp {flavor.price.toLocaleString('id-ID')}
-                    </span>
+                    <div className="w-full relative z-20">
+                      <span className={`text-[11px] font-bold line-clamp-1 block ${isDisabled ? 'text-stone-500' : 'text-[#321F13] group-hover:text-[#C46A18]'}`}>
+                        {flavor.name}
+                      </span>
+                      <span className={`text-[10px] block mt-0.5 ${isDisabled ? 'text-stone-400' : 'text-[#C46A18] font-semibold'}`}>
+                        Rp {flavor.price.toLocaleString('id-ID')}
+                      </span>
+                    </div>
 
-                    {isAllowed ? (
-                      <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFF3E6] text-[#C46A18] group-hover:bg-[#E88C38] group-hover:text-white transition-colors">
-                        + Tambah 1 Pcs
-                      </span>
-                    ) : (
-                      <span className="mt-2 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-stone-200 text-stone-600">
-                        Batas 2 Rasa
-                      </span>
-                    )}
+                    <div className="mt-2.5 w-full relative z-20">
+                      {isComingSoon ? (
+                        <span className="block w-full py-1.5 text-[9px] font-black text-[#FAD082] bg-[#3B281B] rounded-lg tracking-wider">
+                          SEGERA HADIR
+                        </span>
+                      ) : !flavor.available ? (
+                        <span className="block w-full py-1.5 text-[9px] font-bold text-stone-500 bg-stone-200 rounded-lg">
+                          HABIS
+                        </span>
+                      ) : (
+                        <span className={`block w-full py-1.5 text-[10px] font-bold rounded-lg transition-colors ${
+                          currentQty > 0 ? 'bg-[#E88C38] text-white' : 'text-[#8A7160] bg-[#FFF3E6] group-hover:bg-[#E88C38] group-hover:text-white'
+                        }`}>
+                          {currentQty > 0 ? `${currentQty} Terpilih` : '+ Tambah 1 Pcs'}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
@@ -369,7 +386,7 @@ export const BoxBuilder: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
-                className="px-4 py-2.5 rounded-xl border border-[#ECD3BC] bg-white hover:bg-[#FFF5EB] font-bold text-[#4A3324] flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-[#ECD3BC] bg-white hover:bg-[#FFF5EB] font-bold text-[#4A3324] flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
               >
                 <ShoppingBag className="h-4 w-4 text-[#E88C38]" />
                 <span>Lihat Keranjang</span>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Flavor } from '../types';
-import { Plus, Minus, Eye, Sparkles, ShoppingBag, Check, Flame, Award, AlertCircle } from 'lucide-react';
+import { Plus, Minus, Eye, Sparkles, ShoppingBag, Flame, Award, AlertCircle } from 'lucide-react';
 
 export const FlavorShowcase: React.FC = () => {
   const { flavors, addToCart, cart, updateCartQuantity, setPreviewFlavorId, canAddFlavor, selectedFlavorCount, showToast } = useApp();
@@ -104,6 +103,7 @@ export const FlavorShowcase: React.FC = () => {
         {filteredFlavors.map((flavor) => {
           const qtyInCart = getCartQuantity(flavor.id);
           const isAllowed = canAddFlavor(flavor.id);
+          const isComingSoon = !flavor.available && (flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir'));
 
           return (
             <div
@@ -117,26 +117,25 @@ export const FlavorShowcase: React.FC = () => {
                   src={flavor.image}
                   alt={flavor.name}
                   referrerPolicy="no-referrer"
-                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`h-full w-full object-cover transition-transform duration-500 ${isComingSoon ? 'grayscale-[30%]' : 'group-hover:scale-105'}`}
                 />
 
+                {/* OVERLAY GARIS DIAGONAL UNTUK COMING SOON */}
+                {isComingSoon && (
+                  <div className="absolute inset-0 z-10 bg-[repeating-linear-gradient(45deg,var(--tw-gradient-from)_0px,var(--tw-gradient-from)_10px,var(--tw-gradient-to)_10px,var(--tw-gradient-to)_20px)] from-black/60 to-black/30 backdrop-blur-[2px]" />
+                )}
+
                 {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
                   {flavor.badge && (
                     <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black shadow-md uppercase tracking-wider ${
-                      flavor.badge.toLowerCase().includes('coming soon') || flavor.badge.toLowerCase().includes('segera hadir')
-                        ? 'bg-[#3B281B] text-[#FAD082]' 
-                        : 'bg-[#E88C38] text-white'
+                      isComingSoon ? 'bg-[#3B281B] text-[#FAD082]' : 'bg-[#E88C38] text-white'
                     }`}>
-                      {flavor.badge.toLowerCase().includes('coming soon') || flavor.badge.toLowerCase().includes('segera hadir') ? (
-                        <Sparkles className="h-3.5 w-3.5" />
-                      ) : (
-                        <Flame className="h-3.5 w-3.5" />
-                      )}
+                      {isComingSoon ? <Sparkles className="h-3.5 w-3.5" /> : <Flame className="h-3.5 w-3.5" />}
                       {flavor.badge}
                     </span>
                   )}
-                  {flavor.isPopular && (
+                  {flavor.isPopular && !isComingSoon && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-[#3B281B] text-[#F8E3D2] px-2.5 py-0.5 text-[10px] font-bold shadow-xs">
                       <Award className="h-3 w-3 text-[#E88C38]" />
                       Favorit Dapur
@@ -149,7 +148,7 @@ export const FlavorShowcase: React.FC = () => {
                   id={`inspect-3d-${flavor.id}`}
                   type="button"
                   onClick={() => inspectIn3D(flavor.id)}
-                  className="absolute top-3 right-3 rounded-full bg-white/90 hover:bg-white text-[#3B281B] p-2.5 shadow-md backdrop-blur-xs transition-all hover:scale-110 flex items-center gap-1 text-xs font-bold cursor-pointer"
+                  className="absolute top-3 right-3 rounded-full bg-white/90 hover:bg-white text-[#3B281B] p-2.5 shadow-md backdrop-blur-xs transition-all hover:scale-110 flex items-center gap-1 text-xs font-bold cursor-pointer z-20"
                   title="Lihat Struktur & Tekstur 3D"
                 >
                   <Eye className="h-4 w-4 text-[#E88C38]" />
@@ -157,11 +156,11 @@ export const FlavorShowcase: React.FC = () => {
                 </button>
 
                 {/* Price Pill Ribbon */}
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 rounded-xl backdrop-blur-2xs">
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 rounded-xl backdrop-blur-2xs z-20">
                   <span className="text-xs font-semibold text-[#FFF3E6]">
                     {flavor.subtitle}
                   </span>
-                  <span className="text-base font-black px-2.5 py-0.5 rounded-lg bg-[#E88C38] shadow-xs">
+                  <span className={`text-base font-black px-2.5 py-0.5 rounded-lg shadow-xs ${isComingSoon ? 'bg-[#4A3427]' : 'bg-[#E88C38]'}`}>
                     Rp {flavor.price.toLocaleString('id-ID')}
                     <span className="text-[11px] font-normal opacity-90">/pcs</span>
                   </span>
@@ -169,7 +168,7 @@ export const FlavorShowcase: React.FC = () => {
               </div>
 
               {/* Card Body Content */}
-              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
+              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4 relative z-20 bg-white">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="font-['Playfair_Display',serif] text-xl font-bold text-[#321F13] group-hover:text-[#C46A18] transition-colors">
@@ -240,12 +239,12 @@ export const FlavorShowcase: React.FC = () => {
                     <button
                       disabled
                       className={`w-full py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed transition-all ${
-                        flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir')
+                        isComingSoon
                           ? 'bg-[#3B281B] text-[#FAD082] shadow-md border border-[#FAD082]/30'
                           : 'bg-stone-200 text-stone-500'
                       }`}
                     >
-                      {flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir') ? (
+                      {isComingSoon ? (
                         <>
                           <Sparkles className="h-4 w-4" />
                           <span>Segera Hadir</span>

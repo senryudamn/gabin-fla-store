@@ -199,74 +199,94 @@ export const OrderForm: React.FC = () => {
                   const activeFlavorsCount = cart.filter((c) => c.quantity > 0).length;
                   const canAddThis = qty > 0 || activeFlavorsCount < 2;
 
+                  // Check status for coming soon / unavailable
+                  const isAvailable = flavor.available;
+                  const isComingSoon = !isAvailable && (flavor.badge?.toLowerCase().includes('coming soon') || flavor.badge?.toLowerCase().includes('segera hadir'));
+
                   return (
                     <div
                       key={flavor.id}
                       id={`order-picker-${flavor.id}`}
-                      className={`flex items-center justify-between gap-3 p-3 rounded-2xl border transition-all ${
+                      className={`relative flex items-center justify-between gap-3 p-3 rounded-2xl border transition-all overflow-hidden ${
                         qty > 0
                           ? 'bg-[#FFF9F2] border-[#E88C38]/50 shadow-2xs'
-                          : canAddThis
+                          : canAddThis && isAvailable
                           ? 'bg-white border-[#F2E4D8] hover:border-[#ECD3BC]'
-                          : 'bg-[#F9F6F0] border-[#E8DFC9] opacity-60'
-                      } ${!flavor.available ? 'opacity-50 pointer-events-none' : ''}`}
+                          : 'bg-[#F9F6F0] border-[#E8DFC9] opacity-70'
+                      }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      {/* Overlay garis diagonal untuk Coming Soon */}
+                      {isComingSoon && (
+                        <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,var(--tw-gradient-from)_0px,var(--tw-gradient-from)_6px,var(--tw-gradient-to)_6px,var(--tw-gradient-to)_12px)] from-black/5 to-transparent z-0 pointer-events-none" />
+                      )}
+
+                      <div className="flex items-center gap-3 min-w-0 relative z-10">
                         <img
                           src={flavor.image}
                           alt={flavor.name}
                           referrerPolicy="no-referrer"
-                          className="h-12 w-12 rounded-xl object-cover border border-[#ECD3BC] flex-shrink-0"
+                          className={`h-12 w-12 rounded-xl object-cover border border-[#ECD3BC] flex-shrink-0 ${!isAvailable ? 'grayscale' : ''}`}
                         />
                         <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#321F13] truncate">
+                          <h4 className={`text-xs sm:text-sm font-bold truncate ${!isAvailable ? 'text-[#8A7160]' : 'text-[#321F13]'}`}>
                             {flavor.name}
                           </h4>
                           <p className="text-[11px] text-[#8C7362] truncate">
-                            Rp {flavor.price.toLocaleString('id-ID')} / pcs
-                            {flavor.badge && (
-                              <span className="ml-1.5 font-bold text-[#C46A18]">
-                                • {flavor.badge}
-                              </span>
+                            {isComingSoon ? (
+                              <span className="font-black text-[#C46A18] tracking-widest uppercase">Segera Hadir</span>
+                            ) : !isAvailable ? (
+                              <span className="font-bold text-rose-600">Habis Sementara</span>
+                            ) : (
+                              <>
+                                Rp {flavor.price.toLocaleString('id-ID')} / pcs
+                                {flavor.badge && (
+                                  <span className="ml-1.5 font-bold text-[#C46A18]">
+                                    • {flavor.badge}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {qty > 0 && (
+                      {/* Stepper Controls HANYA MUNCUL JIKA AVAILABLE */}
+                      {isAvailable && (
+                        <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
+                          {qty > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => updateCartQuantity(flavor.id, qty - 1)}
+                              className="h-8 w-8 rounded-xl bg-white border border-[#E0CCBC] text-[#3B281B] flex items-center justify-center font-bold hover:bg-[#FBECE0] active:scale-95 transition-all shadow-2xs cursor-pointer"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+
+                          <span className={`w-8 text-center text-sm font-black ${qty > 0 ? 'text-[#C46A18]' : 'text-stone-400'}`}>
+                            {qty}
+                          </span>
+
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(flavor.id, qty - 1)}
-                            className="h-8 w-8 rounded-xl bg-white border border-[#E0CCBC] text-[#3B281B] flex items-center justify-center font-bold hover:bg-[#FBECE0] active:scale-95 transition-all shadow-2xs cursor-pointer"
+                            onClick={() => {
+                              if (!canAddThis) {
+                                showToast('Satu kotak maksimal 2 varian rasa. Hapus salah satu varian yang ada terlebih dahulu.', 'warning');
+                                return;
+                              }
+                              addToCart(flavor.id, 1);
+                            }}
+                            className={`h-8 w-8 rounded-xl flex items-center justify-center font-bold transition-all shadow-xs ${
+                              canAddThis
+                                ? 'bg-[#E88C38] text-white hover:bg-[#D57924] active:scale-95 cursor-pointer'
+                                : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                            }`}
+                            title={canAddThis ? 'Tambah 1 Pcs' : 'Batas 2 rasa tercapai'}
                           >
-                            <Minus className="h-3.5 w-3.5" />
+                            <Plus className="h-3.5 w-3.5" />
                           </button>
-                        )}
-
-                        <span className={`w-8 text-center text-sm font-black ${qty > 0 ? 'text-[#C46A18]' : 'text-stone-400'}`}>
-                          {qty}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!canAddThis) {
-                              showToast('Satu kotak maksimal 2 varian rasa. Hapus salah satu varian yang ada terlebih dahulu.', 'warning');
-                              return;
-                            }
-                            addToCart(flavor.id, 1);
-                          }}
-                          className={`h-8 w-8 rounded-xl flex items-center justify-center font-bold transition-all shadow-xs ${
-                            canAddThis
-                              ? 'bg-[#E88C38] text-white hover:bg-[#D57924] active:scale-95 cursor-pointer'
-                              : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                          }`}
-                          title={canAddThis ? 'Tambah 1 Pcs' : 'Batas 2 rasa tercapai'}
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
