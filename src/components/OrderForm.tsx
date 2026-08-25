@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
 import { 
@@ -42,6 +42,19 @@ export const OrderForm: React.FC = () => {
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedDp, setCopiedDp] = useState(false);
+  
+  // State untuk menyimpan URL QRIS dinamis dari LocalStorage (Admin)
+  const [qrisImageUrl, setQrisImageUrl] = useState("https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=GABIN_FLA_QRIS_DUMMY_URL");
+
+  // Ambil data QRIS saat modal sukses terbuka
+  useEffect(() => {
+    if (successOrderData) {
+      const savedQris = localStorage.getItem('GABIN_QRIS_URL');
+      if (savedQris) {
+        setQrisImageUrl(savedQris);
+      }
+    }
+  }, [successOrderData]);
 
   const pricing = calculateOrderPricing(cart);
   const isMinimumMet = pricing.totalPcs >= 10;
@@ -480,69 +493,73 @@ export const OrderForm: React.FC = () => {
         </form>
       </div>
 
-      {/* Order Success & QRIS Payment Modal */}
+      {/* Order Success & QRIS Payment Modal (DIPERKECIL & RAPI) */}
       {successOrderData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-          <div className="w-full max-w-3xl bg-white rounded-[2rem] border border-[#ECD9C7] p-6 sm:p-10 shadow-2xl relative animate-in zoom-in-95 duration-200 my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          {/* Max-H-[90vh] dan overflow-y-auto mencegah modal terpotong di layar HP/Laptop kecil */}
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl border border-[#ECD9C7] p-5 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            
+            {/* Tombol X ditempatkan lebih rapi di dalam Container agar aman */}
             <button 
               onClick={() => setSuccessOrderData(null)} 
-              className="absolute top-4 right-4 p-2 text-stone-400 hover:bg-stone-100 hover:text-rose-500 rounded-full transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors cursor-pointer z-10"
+              title="Tutup Jendela"
             >
-              <X className="h-6 w-6"/>
+              <X className="h-5 w-5"/>
             </button>
 
-            <div className="text-center space-y-2 mb-8">
-              <div className="h-16 w-16 mx-auto rounded-full bg-emerald-100 border-4 border-emerald-300 text-emerald-600 flex items-center justify-center shadow-md mb-3">
-                <CheckCircle className="h-8 w-8" />
+            <div className="text-center space-y-1.5 mb-5 mt-2">
+              <div className="h-12 w-12 mx-auto rounded-full bg-emerald-100 border-4 border-emerald-300 text-emerald-600 flex items-center justify-center shadow-md mb-2">
+                <CheckCircle className="h-6 w-6" />
               </div>
-              <h3 className="font-['Playfair_Display',serif] text-2xl sm:text-4xl font-extrabold text-[#2F1C11]">
+              <h3 className="font-['Playfair_Display',serif] text-xl sm:text-2xl font-extrabold text-[#2F1C11]">
                 Pesanan Berhasil Dicatat!
               </h3>
-              <p className="text-sm sm:text-base text-[#6B5242]">
+              <p className="text-xs sm:text-sm text-[#6B5242]">
                 Selangkah lagi. Selesaikan pembayaran Down Payment (DP) 50% untuk memproses pesanan Anda.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
               
               {/* Left Column: Order Details & DP */}
-              <div className="space-y-4 flex flex-col justify-center">
-                <div className="p-5 rounded-3xl bg-[#FFF5EC] border border-[#F5D8BF] space-y-4">
+              <div className="space-y-3 flex flex-col justify-center">
+                <div className="p-4 rounded-2xl bg-[#FFF5EC] border border-[#F5D8BF] space-y-3">
                   <div>
-                    <span className="text-[11px] font-black text-[#8A7160] uppercase tracking-wider">Kode Pesanan:</span>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="font-mono font-black text-xl text-[#C46A18]">{successOrderData.orderCode}</span>
+                    <span className="text-[10px] font-black text-[#8A7160] uppercase tracking-wider">Kode Pesanan:</span>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="font-mono font-black text-lg text-[#C46A18]">{successOrderData.orderCode}</span>
                       <button 
                         onClick={copyOrderCode} 
-                        className="px-3 py-1.5 rounded-xl bg-white border border-[#E3C8B4] text-[#4A3427] hover:bg-[#FAF0E6] flex items-center gap-1.5 shadow-xs font-bold text-xs cursor-pointer transition-colors"
+                        className="px-2.5 py-1.5 rounded-xl bg-white border border-[#E3C8B4] text-[#4A3427] hover:bg-[#FAF0E6] flex items-center gap-1.5 shadow-xs font-bold text-[11px] cursor-pointer transition-colors"
                       >
-                        {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copiedCode ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
                         {copiedCode ? 'Tersalin' : 'Salin'}
                       </button>
                     </div>
                   </div>
                   
-                  <div className="pt-4 border-t border-[#F0D0B5] flex justify-between items-center">
-                     <span className="text-xs font-bold text-[#8A7160] uppercase tracking-wider">Total Pesanan:</span>
-                     <p className="font-bold text-[#3B281B] text-lg">Rp {successOrderData.total.toLocaleString('id-ID')}</p>
+                  <div className="pt-3 border-t border-[#F0D0B5] flex justify-between items-center">
+                     <span className="text-[10px] font-bold text-[#8A7160] uppercase tracking-wider">Total Pesanan:</span>
+                     <p className="font-bold text-[#3B281B] text-base">Rp {successOrderData.total.toLocaleString('id-ID')}</p>
                   </div>
                 </div>
 
-                <div className="p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-200 relative overflow-hidden">
+                <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 relative overflow-hidden">
                   <div className="absolute -right-4 -top-4 opacity-10">
-                    <ShieldCheck className="h-24 w-24 text-emerald-900" />
+                    <ShieldCheck className="h-20 w-20 text-emerald-900" />
                   </div>
                   <div className="relative z-10">
-                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <ShieldCheck className="h-4 w-4"/> Nominal DP Wajib (50%)
+                    <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5"/> Nominal DP Wajib (50%)
                     </span>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-3">
-                      <span className="text-3xl font-black text-emerald-700">Rp {successOrderData.dp.toLocaleString('id-ID')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-1.5 gap-2">
+                      <span className="text-2xl font-black text-emerald-700">Rp {successOrderData.dp.toLocaleString('id-ID')}</span>
                       <button 
                         onClick={copyDpAmount} 
-                        className="px-3 py-2 rounded-xl bg-white border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors w-full sm:w-auto"
+                        className="px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors w-full sm:w-auto"
                       >
-                         {copiedDp ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} Salin Nominal
+                         {copiedDp ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} Salin Nominal
                       </button>
                     </div>
                   </div>
@@ -550,35 +567,35 @@ export const OrderForm: React.FC = () => {
               </div>
 
               {/* Right Column: QRIS Instruction */}
-              <div className="flex flex-col items-center justify-center p-6 rounded-3xl border-2 border-stone-200 bg-stone-50 text-center">
-                 {/* Placeholder Image URL, Ganti URL ini dengan URL gambar QRIS asli usaha Anda */}
+              <div className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-stone-200 bg-stone-50 text-center">
+                 {/* Gambar QRIS ditarik dari LocalStorage admin */}
                  <img 
-                   src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=GABIN_FLA_QRIS_DUMMY_URL" 
+                   src={qrisImageUrl} 
                    alt="QRIS Pembayaran Gabin Fla" 
-                   className="w-44 h-44 rounded-2xl shadow-md mb-4 border-4 border-white"
+                   className="w-32 h-32 rounded-xl shadow-md mb-3 border-4 border-white object-cover"
                  />
-                 <h4 className="font-bold text-[#321F13] text-lg">Scan QRIS untuk Bayar</h4>
-                 <p className="text-xs text-stone-500 mt-2 max-w-[220px]">
+                 <h4 className="font-bold text-[#321F13] text-sm">Scan QRIS untuk Bayar</h4>
+                 <p className="text-[11px] text-stone-500 mt-1 max-w-[200px]">
                    Masukkan <strong>tepat</strong> nominal DP yang tertera di samping. 
                  </p>
-                 <span className="mt-3 text-[10px] text-stone-400 italic">
+                 <span className="mt-2 text-[9px] text-stone-400 italic">
                    *Untuk QRIS Dinamis otomatis membutuhkan Payment Gateway tambahan.
                  </span>
               </div>
             </div>
 
             {/* Action Bottom */}
-            <div className="mt-8 pt-8 border-t border-stone-200 flex flex-col items-center gap-3">
-              <p className="text-sm font-semibold text-[#6B5242]">Sudah menyelesaikan pembayaran?</p>
+            <div className="mt-5 pt-5 border-t border-stone-200 flex flex-col items-center gap-2">
+              <p className="text-[11px] sm:text-xs font-semibold text-[#6B5242]">Sudah menyelesaikan pembayaran?</p>
               <a
                 id="modal-wa-direct-btn"
                 href={successOrderData.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setSuccessOrderData(null)}
-                className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
+                className="w-full py-3 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer"
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
                 <span>Kirim Bukti Transfer ke WA</span>
               </a>
             </div>
