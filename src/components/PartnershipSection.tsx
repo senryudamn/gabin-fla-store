@@ -41,21 +41,22 @@ export const PartnershipSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
-  // Calculation Logic
+  // Calculation Logic (Diperbaiki agar ANTI INFINITE LOOP & KEBAL ERROR)
   // 1. Ambil tier aktif berdasarkan kategori yang dipilih
-  const currentTier = partnerTiers.find((t) => t.category === simCategory) || partnerTiers[0];
+  const currentTier = partnerTiers?.find((t) => t.category === simCategory) || partnerTiers?.[0];
   
-  // 2. Harga Modal (Otomatis menyesuaikan Tier + Jenis Varian)
+  // 2. Harga Modal (Otomatis menyesuaikan Tier + Jenis Varian, dengan fallback aman)
   const supplyPrice = currentTier
-    ? (simFlavorType === 'classic' ? currentTier.priceClassic : currentTier.priceSpecial)
+    ? (simFlavorType === 'classic' ? currentTier.priceClassic : (currentTier.priceSpecial || currentTier.pricePremium || 3200))
     : 2300;
 
-  // 3. Otomatis sesuaikan Harga Jual bawaan jika kategori diganti
+  // 3. Otomatis sesuaikan Harga Jual bawaan jika kategori diganti (Hanya bergantung pada simCategory)
   useEffect(() => {
-    if (currentTier) {
-      setSimRetailPrice(currentTier.suggestedRetailPrice);
+    const tier = partnerTiers?.find((t) => t.category === simCategory) || partnerTiers?.[0];
+    if (tier) {
+      setSimRetailPrice(tier.suggestedRetailPrice || 3500);
     }
-  }, [simCategory, currentTier]);
+  }, [simCategory]); // <- Ini adalah kunci perbaikannya agar tidak infinite loop
 
   // 4. Hitungan Matematika Keuntungan
   const profitPerPcs = simRetailPrice - supplyPrice;
@@ -287,7 +288,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                       Rugi Rp {Math.abs(profitPerPcs).toLocaleString('id-ID')}
                     </span>
                   ) : (
-                    <span className="font-bold text-emerald-400 text-sm bg-emerald-400/10 px-2 py-1 rounded-lg">
+                    <span className="font-bold text-[#7EE787] text-sm bg-[#7EE787]/10 px-2 py-1 rounded-lg">
                       Rp {profitPerPcs.toLocaleString('id-ID')} <span className="text-[10px] ml-1">({marginPercent}%)</span>
                     </span>
                   )}
@@ -295,7 +296,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
 
                 <div className="flex justify-between items-end bg-[#E88C38]/10 p-4 rounded-xl border border-[#E88C38]/20">
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-white">Estimasi Keuntungan</p>
+                    <p className="text-sm font-bold text-white">Estimasi Keuntungan Bersih</p>
                     <p className="text-[11px] text-[#D9C4B6]">
                       ({simDailyPcs} pcs x 30 hari)
                     </p>
@@ -312,8 +313,8 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                   </div>
                 </div>
 
-                <p className="text-[10px] text-[#A88C78] text-center italic opacity-80 pt-2">
-                  *Harga modal pasokan di atas otomatis tersinkronisasi berdasarkan Kategori Usaha & Varian Rasa yang Anda pilih.
+                <p className="text-[10px] text-[#A88C78] text-center italic opacity-80 pt-2 leading-relaxed">
+                  *Harga modal pasokan di atas ditarik otomatis dari sistem kami berdasarkan tier kategori usaha & varian rasa.
                 </p>
               </div>
             </div>
@@ -326,11 +327,11 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-lg text-[#321F13]">Pilihan Skema Kemitraan</h3>
-                <span className="text-xs text-[#8C6D58]">Tersedia {partnerTiers.length} Opsi Tier</span>
+                <span className="text-xs text-[#8C6D58]">Tersedia {(partnerTiers || []).length} Opsi Tier</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {partnerTiers.map((tier) => (
+                {(partnerTiers || []).map((tier) => (
                   <div
                     key={tier.id}
                     className="bg-white rounded-2xl p-5 border border-[#ECD9C8] hover:border-[#E88C38]/60 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3"
@@ -347,11 +348,11 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                       <div className="bg-[#FFFDF9] rounded-xl p-3 border border-[#F2E5D8] space-y-1.5 text-xs">
                         <div className="flex justify-between text-[#6B5242]">
                           <span>Varian Classic:</span>
-                          <span className="font-bold text-[#3B281B]">Rp {tier.priceClassic.toLocaleString('id-ID')}/pcs</span>
+                          <span className="font-bold text-[#3B281B]">Rp {tier.priceClassic?.toLocaleString('id-ID')}/pcs</span>
                         </div>
                         <div className="flex justify-between text-[#6B5242]">
                           <span>Varian Signature:</span>
-                          <span className="font-bold text-[#3B281B]">Rp {tier.priceSpecial.toLocaleString('id-ID')}/pcs</span>
+                          <span className="font-bold text-[#3B281B]">Rp {(tier.priceSpecial || tier.pricePremium || 3200).toLocaleString('id-ID')}/pcs</span>
                         </div>
                         <div className="flex justify-between text-[#6B5242]">
                           <span>Sistem Bayar:</span>
@@ -365,7 +366,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                       <div className="space-y-1 pt-1">
                         <p className="text-[11px] font-semibold text-[#8C6D58]">Fasilitas Mitra:</p>
                         <ul className="space-y-1">
-                          {tier.freeFacilities.slice(0, 3).map((fac, idx) => (
+                          {(tier.freeFacilities || []).slice(0, 3).map((fac, idx) => (
                             <li key={idx} className="text-[11px] text-[#554032] flex items-start gap-1.5">
                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
                               <span>{fac}</span>
