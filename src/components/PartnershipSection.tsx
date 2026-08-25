@@ -24,13 +24,21 @@ import {
 export const PartnershipSection: React.FC = () => {
   const { partnerTiers, submitPartnerApplication, showToast } = useApp();
 
-  // Profit Simulator State
-  const [simCategory, setSimCategory] = useState<PartnerCategory>('angkringan');
+  // --- Profit Simulator State ---
+  // Sekarang simulator melacak berdasarkan TIER ID, bukan Category
+  const [simTierId, setSimTierId] = useState<string>('');
   const [simFlavorType, setSimFlavorType] = useState<'classic' | 'special'>('classic');
   const [simDailyPcs, setSimDailyPcs] = useState<number>(35);
   const [simRetailPrice, setSimRetailPrice] = useState<number>(3500);
 
-  // Form State
+  // Set default tier ID saat pertama kali dimuat
+  useEffect(() => {
+    if (partnerTiers && partnerTiers.length > 0 && !simTierId) {
+      setSimTierId(partnerTiers[0].id);
+    }
+  }, [partnerTiers, simTierId]);
+
+  // --- Form State ---
   const [formBusinessName, setFormBusinessName] = useState('');
   const [formOwnerName, setFormOwnerName] = useState('');
   const [formCategory, setFormCategory] = useState<PartnerCategory>('angkringan');
@@ -42,22 +50,22 @@ export const PartnershipSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
-  // Calculation Logic (Diperbaiki agar ANTI INFINITE LOOP & KEBAL ERROR)
-  // 1. Ambil tier aktif berdasarkan kategori yang dipilih
-  const currentTier = partnerTiers?.find((t) => t.category === simCategory) || partnerTiers?.[0];
+  // --- Calculation Logic (ANTI INFINITE LOOP & KEBAL ERROR) ---
+  // 1. Ambil tier aktif berdasarkan ID yang dipilih
+  const currentTier = partnerTiers?.find((t) => t.id === simTierId) || partnerTiers?.[0];
   
   // 2. Harga Modal (Otomatis menyesuaikan Tier + Jenis Varian, dengan fallback aman)
   const supplyPrice = currentTier
     ? (simFlavorType === 'classic' ? currentTier.priceClassic : (currentTier.priceSpecial || currentTier.pricePremium || 3200))
     : 2300;
 
-  // 3. Otomatis sesuaikan Harga Jual bawaan jika kategori diganti (Hanya bergantung pada simCategory)
+  // 3. Otomatis sesuaikan Harga Jual bawaan jika TIER diganti
   useEffect(() => {
-    const tier = partnerTiers?.find((t) => t.category === simCategory) || partnerTiers?.[0];
+    const tier = partnerTiers?.find((t) => t.id === simTierId) || partnerTiers?.[0];
     if (tier) {
       setSimRetailPrice(tier.suggestedRetailPrice || 3500);
     }
-  }, [simCategory]); // <- Ini adalah kunci perbaikannya agar tidak infinite loop
+  }, [simTierId]); 
 
   // 4. Hitungan Matematika Keuntungan
   const profitPerPcs = simRetailPrice - supplyPrice;
@@ -150,32 +158,32 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                 </span>
               </div>
 
-              {/* Category Selection */}
+              {/* TIER Selection (Menggantikan Category Selection) */}
               <div className="space-y-3 mb-6">
                 <label className="text-xs font-bold text-[#D9C4B6] uppercase tracking-wider">
-                  Jenis Tempat Usaha Anda:
+                  Jenis Tempat Usaha / Skema:
                 </label>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    { id: 'angkringan', label: 'Angkringan / Warung', icon: Utensils },
-                    { id: 'kedai_kopi', label: 'Kedai Kopi Santai', icon: Coffee },
-                    { id: 'cafe', label: 'Cafe & Resto', icon: Store },
-                    { id: 'toko_roti', label: 'Toko Roti / Swalayan', icon: ShoppingBag },
-                  ].map((cat) => {
-                    const Icon = cat.icon;
+                  {(partnerTiers || []).map((tier) => {
+                    // Coba tebak ikon berdasarkan kategorinya
+                    let Icon = Store;
+                    if (tier.category === 'angkringan') Icon = Utensils;
+                    if (tier.category === 'kedai_kopi') Icon = Coffee;
+                    if (tier.category === 'toko_roti') Icon = ShoppingBag;
+
                     return (
                       <button
-                        key={cat.id}
+                        key={tier.id}
                         type="button"
-                        onClick={() => setSimCategory(cat.id as PartnerCategory)}
+                        onClick={() => setSimTierId(tier.id)}
                         className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
-                          simCategory === cat.id
+                          simTierId === tier.id
                             ? 'bg-[#E88C38] text-white border-[#E88C38] shadow-md'
                             : 'bg-[#1F1007] text-[#A88C78] border-[#3D2616] hover:bg-[#3D2616] hover:text-white'
                         }`}
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{cat.label}</span>
+                        <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">{tier.tierName}</span>
                       </button>
                     );
                   })}
@@ -315,7 +323,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                 </div>
 
                 <p className="text-[10px] text-[#A88C78] text-center italic opacity-80 pt-2 leading-relaxed">
-                  *Harga modal pasokan di atas ditarik otomatis dari sistem kami berdasarkan tier kategori usaha & varian rasa.
+                  *Harga modal pasokan di atas ditarik otomatis dari sistem kami berdasarkan tier skema usaha & varian rasa. Margin dan keuntungan dapat Anda sesuaikan bebas dengan mengganti target harga jual konsumen.
                 </p>
               </div>
             </div>
@@ -382,7 +390,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                       <button
                         type="button"
                         onClick={() => {
-                          setSimCategory(tier.category as PartnerCategory);
+                          setSimTierId(tier.id);
                           const el = document.getElementById('profit-simulator');
                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           showToast(`Simulasi diperbarui menggunakan skema ${tier.tierName}`, 'info');
