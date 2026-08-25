@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Gift,
   Lock,
-  Edit3
+  Edit3,
+  Building2
 } from 'lucide-react';
 
 export const PartnershipSection: React.FC = () => {
