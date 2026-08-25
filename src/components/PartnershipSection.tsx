@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PartnerCategory } from '../types';
 import {
@@ -9,16 +9,15 @@ import {
   Sparkles,
   TrendingUp,
   Truck,
-  ShieldCheck,
   PackageCheck,
   Send,
   MessageCircle,
-  HelpCircle,
   CheckCircle2,
-  Percent,
   Calculator,
   ChevronRight,
   Gift,
+  Lock,
+  Edit3
 } from 'lucide-react';
 
 export const PartnershipSection: React.FC = () => {
@@ -41,13 +40,26 @@ export const PartnershipSection: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
-  // Find active tier for simulation
+  // Calculation Logic (Diperbaiki)
+  // 1. Ambil tier aktif
   const currentTier = partnerTiers.find((t) => t.category === simCategory) || partnerTiers[0];
-  const avgCostPerPcs = currentTier ? Math.round((currentTier.priceClassic + currentTier.pricePremium) / 2) : 2500;
-  const profitPerPcs = Math.max(0, simRetailPrice - avgCostPerPcs);
+  
+  // 2. Harga Modal (Locked/Ditetapkan Admin)
+  const supplyPrice = currentTier ? currentTier.priceClassic : 2300;
+
+  // 3. Otomatis sesuaikan Harga Jual bawaan jika kategori diganti
+  useEffect(() => {
+    const tier = partnerTiers.find((t) => t.category === simCategory);
+    if (tier) {
+      setSimRetailPrice(tier.suggestedRetailPrice);
+    }
+  }, [simCategory, partnerTiers]);
+
+  // 4. Hitungan Matematika Keuntungan
+  const profitPerPcs = simRetailPrice - supplyPrice;
+  const isLoss = profitPerPcs < 0;
   const dailyProfit = profitPerPcs * simDailyPcs;
   const monthlyProfit = dailyProfit * 30;
-  const monthlyRevenue = simRetailPrice * simDailyPcs * 30;
   const marginPercent = simRetailPrice > 0 ? Math.round((profitPerPcs / simRetailPrice) * 100) : 0;
 
   const handleSubmitApplication = (e: React.FormEvent) => {
@@ -77,18 +89,12 @@ export const PartnershipSection: React.FC = () => {
 
   const getCategoryLabel = (cat: PartnerCategory) => {
     switch (cat) {
-      case 'angkringan':
-        return 'Angkringan & Warung';
-      case 'kedai_kopi':
-        return 'Kedai Kopi Santai';
-      case 'cafe':
-        return 'Cafe & Resto';
-      case 'toko_roti':
-        return 'Toko Roti & Oleh-oleh';
-      case 'reseller_kantin':
-        return 'Reseller & Kantin';
-      default:
-        return cat;
+      case 'angkringan': return 'Angkringan / Warung';
+      case 'kedai_kopi': return 'Kedai Kopi Santai';
+      case 'cafe': return 'Cafe & Resto';
+      case 'toko_roti': return 'Toko Roti / Swalayan';
+      case 'reseller_kantin': return 'Reseller & Kantin';
+      default: return cat;
     }
   };
 
@@ -173,8 +179,9 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
 
         {/* Interactive Profit Calculator & Tier Showcase */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
+          
           {/* Profit Simulator (Left 5 Cols) */}
-          <div className="lg:col-span-5 bg-gradient-to-br from-[#3B281B] to-[#25170E] text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="lg:col-span-5 bg-gradient-to-br from-[#3B281B] to-[#25170E] text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 sticky top-24">
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-[#E88C38]" />
@@ -186,7 +193,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
             </div>
 
             {/* Category Selector */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="text-xs font-semibold text-[#DEC3AD]">Jenis Tempat Usaha Anda:</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -200,13 +207,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => {
-                        setSimCategory(item.id as PartnerCategory);
-                        if (item.id === 'angkringan') setSimRetailPrice(3500);
-                        if (item.id === 'kedai_kopi') setSimRetailPrice(4500);
-                        if (item.id === 'cafe') setSimRetailPrice(6000);
-                        if (item.id === 'toko_roti') setSimRetailPrice(4000);
-                      }}
+                      onClick={() => setSimCategory(item.id as PartnerCategory)}
                       className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
                         simCategory === item.id
                           ? 'bg-[#E88C38] text-white shadow-md'
@@ -244,54 +245,92 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
               </div>
             </div>
 
-            {/* Retail Selling Price Input */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#DEC3AD]">Rencana Harga Jual ke Konsumen (Rp/pcs):</label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">Rp</span>
-                <input
-                  type="number"
-                  step="500"
-                  value={simRetailPrice}
-                  onChange={(e) => setSimRetailPrice(Math.max(1000, Number(e.target.value)))}
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
-                />
+            {/* DYNAMIC PRICING BOXES */}
+            <div className="space-y-4 mb-6 bg-[#1F1007] p-5 rounded-2xl border border-[#3D2616]">
+              
+              {/* 1. HARGA PASOKAN (LOCKED - DARI ADMIN) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#A88C78] flex items-center justify-between">
+                  <span>Biaya Modal Pasokan Mitra</span>
+                  <span className="flex items-center gap-1 text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md">
+                    <Lock className="h-3 w-3" />
+                    <span className="text-[9px] uppercase tracking-wider">Ketetapan Pusat</span>
+                  </span>
+                </label>
+                <div className="flex items-center justify-between bg-[#2D1B11] px-4 py-3 rounded-xl border border-[#4A3427]">
+                  <span className="text-sm font-bold text-[#D9C4B6]">Rp</span>
+                  <span className="text-xl font-black text-emerald-400">
+                    {supplyPrice.toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+
+              {/* 2. HARGA JUAL (EDITABLE - OLEH MITRA) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#A88C78] flex items-center justify-between">
+                  <span>Rencana Harga Jual Konsumen</span>
+                  <span className="flex items-center gap-1 text-[#E88C38]">
+                    <Edit3 className="h-3 w-3" />
+                    <span className="text-[9px] uppercase tracking-wider">Ubah Sesuai Target</span>
+                  </span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-white">Rp</span>
+                  <input
+                    type="number"
+                    value={simRetailPrice || ''}
+                    onChange={(e) => setSimRetailPrice(Number(e.target.value))}
+                    className="bg-[#3D2616] text-right text-xl font-black text-white px-4 py-2.5 rounded-xl border border-[#E88C38] focus:outline-none focus:ring-2 focus:ring-[#E88C38]/50 transition-all w-full placeholder-stone-600"
+                    placeholder="Ketik harga jual..."
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Calculated Profit Result Card */}
-            <div className="bg-white/10 rounded-2xl p-4 border border-white/15 space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#DEC3AD]">
-                <span>Biaya Modal Pasokan Mitra:</span>
-                <span className="font-semibold text-white">~ Rp {avgCostPerPcs.toLocaleString('id-ID')} / pcs</span>
+            {/* CALCULATION RESULTS */}
+            <div className="space-y-4 pt-2 border-t border-[#4A3427]/60">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-[#D9C4B6] font-medium">Keuntungan Bersih per Pcs:</span>
+                {isLoss ? (
+                  <span className="font-bold text-rose-400 text-sm">
+                    Rugi Rp {Math.abs(profitPerPcs).toLocaleString('id-ID')}
+                  </span>
+                ) : (
+                  <span className="font-bold text-[#7EE787] text-sm bg-[#7EE787]/10 px-2 py-1 rounded-lg">
+                    Rp {profitPerPcs.toLocaleString('id-ID')} <span className="text-[10px] ml-1">({marginPercent}%)</span>
+                  </span>
+                )}
               </div>
-              <div className="flex items-center justify-between text-xs text-[#DEC3AD]">
-                <span>Keuntungan Bersih per Pcs:</span>
-                <span className="font-bold text-[#7EE787]">Rp {profitPerPcs.toLocaleString('id-ID')} ({marginPercent}%)</span>
-              </div>
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] text-[#DEC3AD]">Estimasi Keuntungan Bersih:</p>
-                  <p className="text-xs text-white/70">({simDailyPcs} pcs x 30 hari)</p>
+
+              <div className="flex justify-between items-end bg-[#E88C38]/10 p-4 rounded-xl border border-[#E88C38]/20">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-white">Estimasi Keuntungan Bersih</p>
+                  <p className="text-[11px] text-[#D9C4B6]">
+                    ({simDailyPcs} pcs x 30 hari)
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-[#FFAE66]">
-                    Rp {monthlyProfit.toLocaleString('id-ID')}
-                  </p>
-                  <p className="text-[10px] text-stone-300">/ bulan</p>
+                  {isLoss ? (
+                    <span className="text-2xl font-black text-rose-400">Minus / Rugi</span>
+                  ) : (
+                    <span className="text-3xl font-black text-[#FAD082]">
+                      Rp {monthlyProfit.toLocaleString('id-ID')}
+                    </span>
+                  )}
+                  <span className="text-xs text-[#A88C78] block mt-0.5">/ bulan</span>
                 </div>
               </div>
-            </div>
 
-            <p className="text-[11px] text-stone-400 leading-relaxed italic">
-              * Perhitungan di atas adalah estimasi rata-rata varian classic & premium. Dapat disesuaikan lebih lanjut di sistem kerja sama.
-            </p>
+              <p className="text-[10px] text-[#A88C78] text-center italic opacity-80 pt-2 leading-relaxed">
+                *Harga modal pasokan di atas ditarik otomatis dari sistem kami berdasarkan tier kategori usaha (Varian Classic). Margin dan keuntungan dapat Anda sesuaikan bebas dengan mengganti target harga jual konsumen.
+              </p>
+            </div>
           </div>
 
           {/* Tier Cards Showcase (Right 7 Cols) */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-4 mt-8 lg:mt-0">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg text-[#321F13]">Pilihan Skema Kerja Sama Kemitraan</h3>
+              <h3 className="font-bold text-lg text-[#321F13]">Pilihan Skema Kemitraan</h3>
               <span className="text-xs text-[#8C6D58]">Tersedia {partnerTiers.length} Opsi Tier</span>
             </div>
 
@@ -316,8 +355,8 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                         <span className="font-bold text-[#3B281B]">Rp {tier.priceClassic.toLocaleString('id-ID')}/pcs</span>
                       </div>
                       <div className="flex justify-between text-[#6B5242]">
-                        <span>Varian Premium:</span>
-                        <span className="font-bold text-[#3B281B]">Rp {tier.pricePremium.toLocaleString('id-ID')}/pcs</span>
+                        <span>Varian Signature:</span>
+                        <span className="font-bold text-[#3B281B]">Rp {tier.priceSpecial.toLocaleString('id-ID')}/pcs</span>
                       </div>
                       <div className="flex justify-between text-[#6B5242]">
                         <span>Sistem Bayar:</span>
@@ -348,7 +387,7 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                       const el = document.getElementById('partner-application-form');
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="w-full py-2 rounded-xl bg-[#FFF6EE] hover:bg-[#E88C38] text-[#C46A18] hover:text-white border border-[#FAD8BD] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2 rounded-xl bg-[#FFF6EE] hover:bg-[#E88C38] text-[#C46A18] hover:text-white border border-[#FAD8BD] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                   >
                     <span>Daftar Skema Ini</span>
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -428,21 +467,6 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                   />
                 </div>
 
-                {/* Owner Name */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#3B281B]">
-                    Nama Penanggung Jawab / Pemilik <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Budi Santoso"
-                    value={formOwnerName}
-                    onChange={(e) => setFormOwnerName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
-                  />
-                </div>
-
                 {/* Business Category */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-[#3B281B]">
@@ -460,6 +484,23 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                     <option value="reseller_kantin">Reseller / Kantin Kampus & Kantor</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Owner Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#3B281B]">
+                    Nama Penanggung Jawab / Pemilik <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Budi Santoso"
+                    value={formOwnerName}
+                    onChange={(e) => setFormOwnerName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
+                  />
+                </div>
 
                 {/* WhatsApp Number */}
                 <div className="space-y-1.5">
@@ -475,33 +516,18 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
                   />
                 </div>
+              </div>
 
-                {/* City */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#3B281B]">Kota / Kabupaten</label>
-                  <input
-                    type="text"
-                    value={formCity}
-                    onChange={(e) => setFormCity(e.target.value)}
-                    placeholder="Yogyakarta / Sleman / Bantul"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
-                  />
-                </div>
-
-                {/* Estimated Daily Supply */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#3B281B]">
-                    Estimasi Kebutuhan Harian (Pcs/Hari)
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    step="5"
-                    value={formEstimatedPcs}
-                    onChange={(e) => setFormEstimatedPcs(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
-                  />
-                </div>
+              {/* City */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#3B281B]">Kota / Kabupaten</label>
+                <input
+                  type="text"
+                  value={formCity}
+                  onChange={(e) => setFormCity(e.target.value)}
+                  placeholder="Yogyakarta / Sleman / Bantul"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
+                />
               </div>
 
               {/* Full Address */}
@@ -517,6 +543,29 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                   onChange={(e) => setFormAddress(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-sm text-[#3B281B] focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
                 />
+              </div>
+
+              {/* Estimated Daily Supply */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#3B281B]">
+                    Estimasi Kebutuhan Harian (Pcs/Hari)
+                  </label>
+                  <span className="text-sm font-bold text-[#C46A18]">{formEstimatedPcs} Pcs</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="200"
+                  step="10"
+                  value={formEstimatedPcs}
+                  onChange={(e) => setFormEstimatedPcs(Number(e.target.value))}
+                  className="w-full accent-[#E88C38] cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-[#8C7362] px-1">
+                  <span>Mulai 10 pcs</span>
+                  <span>Hingga 200+ pcs</span>
+                </div>
               </div>
 
               {/* Notes */}
@@ -540,8 +589,14 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                   disabled={isSubmitting}
                   className="w-full sm:flex-1 py-3.5 rounded-2xl bg-[#E88C38] hover:bg-[#D57924] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <Send className="h-4 w-4" />
-                  <span>{isSubmitting ? 'Mengirim Data...' : 'Kirim Pengajuan Kemitraan'}</span>
+                  {isSubmitting ? (
+                    <span className="animate-pulse">Mengirim Data...</span>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      <span>Kirim Pengajuan Kemitraan</span>
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -552,6 +607,11 @@ Mohon informasi katalog mitra, harga grosir khusus, dan jadwal pengiriman tester
                   <MessageCircle className="h-4 w-4" />
                   <span>Konsultasi WA Cepat</span>
                 </button>
+              </div>
+              
+              <div className="flex items-center justify-center gap-2 text-xs text-[#8A7160]">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Tidak ada ikatan kontrak yang memberatkan.</span>
               </div>
             </form>
           )}
