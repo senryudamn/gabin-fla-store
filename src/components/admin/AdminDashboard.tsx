@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BRAND_ASSETS } from '../../data/mockData';
 import { Flavor, BranchLocation, DiscountRule, Order, OrderStatus } from '../../types';
@@ -29,7 +29,8 @@ import {
   AlertCircle,
   Truck,
   Building2,
-  Clock
+  Clock,
+  QrCode // Ditambahkan untuk ikon pengaturan QRIS
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -71,6 +72,27 @@ export const AdminDashboard: React.FC = () => {
 
   // Orders Filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
+
+  // --- State & Logic untuk Pengaturan QRIS ---
+  const [qrisUrlInput, setQrisUrlInput] = useState('');
+
+  useEffect(() => {
+    // Membaca URL QRIS yang tersimpan saat admin dashboard dimuat
+    const savedQris = localStorage.getItem('GABIN_QRIS_URL');
+    if (savedQris) {
+      setQrisUrlInput(savedQris);
+    }
+  }, []);
+
+  const handleSaveQris = () => {
+    if (!qrisUrlInput.trim()) {
+      showToast('URL QRIS tidak boleh kosong!', 'warning');
+      return;
+    }
+    localStorage.setItem('GABIN_QRIS_URL', qrisUrlInput);
+    showToast('Gambar QRIS berhasil diperbarui!', 'success');
+  };
+  // ------------------------------------------
 
   // New/Edit Flavor Form State (Disederhanakan menjadi 2 kategori)
   const [flavorForm, setFlavorForm] = useState({
@@ -766,8 +788,44 @@ export const AdminDashboard: React.FC = () => {
               </button>
             </div>
 
+            {/* Pengaturan QRIS Pembayaran (Baru Ditambahkan) */}
+            <div className="bg-white rounded-3xl border border-[#ECD9C7] p-5 shadow-sm flex flex-col sm:flex-row gap-5 items-center">
+              <div className="flex-shrink-0">
+                <img
+                  src={qrisUrlInput || "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=GABIN_FLA_QRIS_DUMMY_URL"}
+                  alt="QRIS Preview"
+                  className="w-24 h-24 rounded-xl border border-stone-200 object-cover shadow-xs"
+                />
+              </div>
+              <div className="flex-1 space-y-2 w-full">
+                <h3 className="font-bold text-[#321F13] text-sm flex items-center gap-1.5">
+                  <QrCode className="h-4 w-4 text-[#E88C38]" />
+                  Pengaturan Gambar QRIS Pembayaran
+                </h3>
+                <p className="text-xs text-[#7A6455]">
+                  Masukkan URL gambar QRIS (dari Imgur, Postimage, dll) yang akan ditampilkan kepada pelanggan di halaman sukses untuk pembayaran DP.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={qrisUrlInput}
+                    onChange={(e) => setQrisUrlInput(e.target.value)}
+                    placeholder="https://..."
+                    className="flex-1 px-3 py-2 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-xs focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveQris}
+                    className="px-4 py-2 bg-[#3B281B] hover:bg-[#2F1C11] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    Simpan QRIS
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none mt-2">
               <span className="text-xs font-bold text-[#8A7160] mr-1">Status:</span>
               {[
                 { key: 'all', label: 'Semua Status' },
