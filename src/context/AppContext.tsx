@@ -526,11 +526,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalPcs,
       subtotal,
       discount,
-      appliedDiscountNote: discount > 0 ? discountNote : undefined,
+      appliedDiscountNote: discount > 0 ? discountNote : "", // <--- FIX 1: Diganti jadi string kosong agar tidak undefined
       totalPrice: total,
       dpAmount: dp,
       remainingAmount: remaining,
-      notes: data.notes,
+      notes: data.notes || "", // <--- FIX 2: Fallback string kosong jika tidak ada catatan
       status: 'menunggu_dp',
       createdAt: new Date().toISOString(),
     };
@@ -846,7 +846,7 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
         showToast,
         dismissToast,
         calculateOrderPricing,
-        uploadImage, // <- FUNGSI UPLOAD CLOUDINARY DIEKSPOR DI SINI
+        uploadImage,
       }}
     >
       {children}
