@@ -86,7 +86,7 @@ interface AppContextType {
   adminTab: 'menu' | 'locations' | 'discounts' | 'orders' | 'partners' | 'analytics';
   setAdminTab: (tab: 'menu' | 'locations' | 'discounts' | 'orders' | 'partners' | 'analytics') => void;
 
-  // Admin Auth (Hanya menggunakan Google Firebase)
+  // Admin Auth (Google Firebase)
   adminUser: AdminUser | null;
   loginWithGoogle: () => void;
   logoutAdmin: () => void;
@@ -125,6 +125,9 @@ interface AppContextType {
   toasts: Toast[];
   showToast: (message: string, type?: Toast['type']) => void;
   dismissToast: (id: string) => void;
+
+  // Cloudinary Image Upload Helper
+  uploadImage: (file: File) => Promise<string | null>;
 
   // Utility calculation
   calculateOrderPricing: (cartItems: CartItem[]) => {
@@ -178,7 +181,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_PARTNER_APPLICATIONS;
   });
 
-  // Initial cart: Diubah menjadi array kosong agar tidak ada menu dummy
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('gabin_cart');
     if (saved) {
@@ -187,11 +189,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
         }
-      } catch (e) {
-        // fallback
-      }
+      } catch (e) {}
     }
-    return []; // Kembali sebagai array kosong
+    return [];
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -206,41 +206,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [analytics] = useState<AnalyticsData>(INITIAL_ANALYTICS);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // --- FIREBASE REAL-TIME SYNC ---
+  // --- CLOUDINARY UPLOAD LOGIC ---
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      showToast('Konfigurasi Cloudinary belum disetel di .env', 'error');
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      return data.secure_url;
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+      showToast('Gagal mengunggah gambar ke server.', 'error');
+      return null;
+    }
+  };
+
+  // --- FIREBASE REAL-TIME SYNC (With Safe Fallbacks) ---
   useEffect(() => {
     const unsubs: (() => void)[] = [];
 
-    // Menggabungkan 6 rasa bawaan (built-in) dengan data dari Firebase
     unsubs.push(onSnapshot(collection(db, 'flavors'), (snap) => {
-      const baseFlavorsMap = new Map(INITIAL_FLAVORS.map(f => [f.id, f]));
-      
       if (!snap.empty) {
-        snap.docs.forEach(d => {
-          const data = d.data() as Flavor;
-          baseFlavorsMap.set(data.id, data);
-        });
+        setFlavors(snap.docs.map(d => d.data() as Flavor));
+      } else {
+        setFlavors(INITIAL_FLAVORS); // Fallback ke mock data jika DB kosong
       }
-      
-      setFlavors(Array.from(baseFlavorsMap.values()));
     }));
     
     unsubs.push(onSnapshot(collection(db, 'discountRules'), (snap) => {
-      if (!snap.empty) setDiscountRules(snap.docs.map(d => d.data() as DiscountRule));
+      if (!snap.empty) {
+        setDiscountRules(snap.docs.map(d => d.data() as DiscountRule));
+      } else {
+        setDiscountRules(INITIAL_DISCOUNT_RULES);
+      }
     }));
+
     unsubs.push(onSnapshot(collection(db, 'locations'), (snap) => {
-      if (!snap.empty) setLocations(snap.docs.map(d => d.data() as BranchLocation));
+      if (!snap.empty) {
+        setLocations(snap.docs.map(d => d.data() as BranchLocation));
+      } else {
+        setLocations(INITIAL_LOCATIONS);
+      }
     }));
+
     unsubs.push(onSnapshot(collection(db, 'orders'), (snap) => {
-      if (!snap.empty) setOrders(snap.docs.map(d => d.data() as Order));
+      if (!snap.empty) {
+        setOrders(snap.docs.map(d => d.data() as Order));
+      } else {
+        setOrders([]);
+      }
     }));
+
     unsubs.push(onSnapshot(collection(db, 'partnerTiers'), (snap) => {
-      if (!snap.empty) setPartnerTiers(snap.docs.map(d => d.data() as PartnerPricingTier));
+      if (!snap.empty) {
+        setPartnerTiers(snap.docs.map(d => d.data() as PartnerPricingTier));
+      } else {
+        setPartnerTiers(INITIAL_PARTNER_TIERS);
+      }
     }));
+
     unsubs.push(onSnapshot(collection(db, 'partners'), (snap) => {
-      if (!snap.empty) setPartners(snap.docs.map(d => d.data() as Partner));
+      if (!snap.empty) {
+        setPartners(snap.docs.map(d => d.data() as Partner));
+      } else {
+        setPartners([]);
+      }
     }));
+
     unsubs.push(onSnapshot(collection(db, 'partnerApplications'), (snap) => {
-      if (!snap.empty) setPartnerApplications(snap.docs.map(d => d.data() as PartnerApplication));
+      if (!snap.empty) {
+        setPartnerApplications(snap.docs.map(d => d.data() as PartnerApplication));
+      } else {
+        setPartnerApplications([]);
+      }
     }));
 
     return () => unsubs.forEach(unsub => unsub());
@@ -259,7 +310,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         setAdminUser(adminData);
       } else {
-        setAdminUser(null); // Membersihkan cache jika Firebase menyatakan user log out
+        setAdminUser(null);
       }
     });
     return () => unsubscribe();
@@ -289,7 +340,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Preview flavor helper (Menambahkan safe fallback untuk database kosong)
   const safeFallbackFlavor: Flavor = {
     id: 'empty-state',
     name: 'Belum Ada Varian',
@@ -298,7 +348,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     price: 0,
     image: '',
     category: 'classic',
-    flaColorHex: '#FFF4D0', // Fallback warna agar 3D tidak error
+    flaColorHex: '#FFF4D0',
     available: false,
     sweetness: 0,
     richness: 0,
@@ -306,7 +356,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   const previewFlavor = flavors.find((f) => f.id === previewFlavorId) || flavors[0] || INITIAL_FLAVORS[0] || safeFallbackFlavor;
 
-  // Pricing calculation helper
   const calculateOrderPricing = (cartItems: CartItem[]) => {
     let totalPcs = 0;
     let subtotal = 0;
@@ -331,7 +380,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let discount = 0;
     const discountNotes: string[] = [];
 
-    // Calculate discount per 10 pcs
     const activePer10Rule = discountRules.find((r) => r.active && r.minQuantity === 10);
     if (activePer10Rule && totalPcs >= 10) {
       const batches = Math.floor(totalPcs / 10);
@@ -340,7 +388,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       discountNotes.push(`Diskon Kelipatan 10 Pcs (${batches}x = Rp ${discountPer10.toLocaleString('id-ID')})`);
     }
 
-    // Calculate jumbo discount (>=50 pcs)
     const activeJumboRule = discountRules.find((r) => r.active && r.minQuantity >= 50);
     if (activeJumboRule && totalPcs >= activeJumboRule.minQuantity) {
       discount += activeJumboRule.discountPerPack;
@@ -363,7 +410,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  // Cart Pricing summary
   const pricing = calculateOrderPricing(cart);
   const cartTotalPcs = pricing.totalPcs;
   const cartSubtotal = pricing.subtotal;
@@ -373,7 +419,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const cartDp = pricing.dp;
   const cartRemaining = pricing.remaining;
 
-  // 2-Flavor Constraint Helpers
   const activeCartItems = cart.filter((item) => item.quantity > 0);
   const selectedFlavorCount = activeCartItems.length;
 
@@ -443,7 +488,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart([]);
   };
 
-  // Create Order & Build WhatsApp message
   const createOrder = (data: {
     customerName: string;
     whatsappNumber: string;
@@ -491,11 +535,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
     };
 
-    // Optimistic Update & Firebase Sync
     setOrders((prev) => [newOrder, ...prev]);
     setDoc(doc(db, 'orders', newOrder.id), newOrder).catch(console.error);
 
-    // Construct WhatsApp message
     const itemsText = itemSummaries
       .map((it) => `• ${it.flavorName}: ${it.quantity} pcs (Rp ${it.itemTotal.toLocaleString('id-ID')})`)
       .join('\n');
@@ -531,7 +573,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     return { order: newOrder, whatsappUrl };
   };
 
-  // Google Authentication Handler for Admin Mode
   const loginWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -561,7 +602,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     showToast('Anda telah keluar dari Portal Admin.', 'info');
   };
 
-  // CMS Flavor Actions
   const updateFlavor = (updated: Flavor) => {
     setFlavors((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
     setDoc(doc(db, 'flavors', updated.id), updated).catch(console.error);
@@ -592,7 +632,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     }
   };
 
-  // CMS Location Actions
   const updateLocation = (updated: BranchLocation) => {
     setLocations((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
     setDoc(doc(db, 'locations', updated.id), updated).catch(console.error);
@@ -613,7 +652,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     showToast('Lokasi cabang dihapus', 'info');
   };
 
-  // CMS Discount Actions
   const updateDiscountRule = (updated: DiscountRule) => {
     setDiscountRules((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
     setDoc(doc(db, 'discountRules', updated.id), updated).catch(console.error);
@@ -634,7 +672,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     showToast('Aturan diskon dihapus', 'info');
   };
 
-  // CMS Orders Actions
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
     updateDoc(doc(db, 'orders', orderId), { status }).catch(console.error);
@@ -647,7 +684,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     showToast('Data pesanan berhasil dihapus', 'info');
   };
 
-  // CMS Partner Pricing Tier Actions
   const updatePartnerTier = (updated: PartnerPricingTier) => {
     setPartnerTiers((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     setDoc(doc(db, 'partnerTiers', updated.id), updated).catch(console.error);
@@ -668,7 +704,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     showToast('Tier kemitraan berhasil dihapus', 'info');
   };
 
-  // CMS Partner Actions
   const addPartner = (partnerData: Omit<Partner, 'id' | 'registeredAt' | 'totalSuppliedPcs' | 'totalRevenueValue'>) => {
     const id = `ptr-${Date.now().toString().slice(-4)}`;
     const newPartner: Partner = {
@@ -695,7 +730,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     showToast('Mitra berhasil dihapus dari sistem', 'info');
   };
 
-  // Storefront & CMS Partner Application Actions
   const submitPartnerApplication = (appData: Omit<PartnerApplication, 'id' | 'createdAt' | 'status'>) => {
     const id = `app-${Date.now().toString().slice(-4)}`;
     const newApp: PartnerApplication = {
@@ -743,7 +777,6 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
     setPartners((prev) => [newPartner, ...prev]);
     setPartnerApplications((prev) => prev.map((a) => (a.id === appId ? { ...a, status: 'approved' } : a)));
     
-    // Firebase sync
     setDoc(doc(db, 'partners', newPartner.id), newPartner).catch(console.error);
     updateDoc(doc(db, 'partnerApplications', appId), { status: 'approved' }).catch(console.error);
     
@@ -813,6 +846,7 @@ Mohon kirimkan nomor rekening / QRIS untuk pembayaran DP 50% agar pesanan segera
         showToast,
         dismissToast,
         calculateOrderPricing,
+        uploadImage, // <- FUNGSI UPLOAD CLOUDINARY DIEKSPOR DI SINI
       }}
     >
       {children}
