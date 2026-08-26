@@ -30,7 +30,9 @@ import {
   Truck,
   Building2,
   Clock,
-  QrCode // Ditambahkan untuk ikon pengaturan QRIS
+  QrCode,
+  UploadCloud, // Ditambahkan untuk ikon upload
+  Loader2 // Ditambahkan untuk loading spinner
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -58,6 +60,7 @@ export const AdminDashboard: React.FC = () => {
     deleteOrder,
     analytics,
     showToast,
+    uploadImage, // Menarik fungsi upload gambar dari context
   } = useApp();
 
   // Modals state
@@ -75,6 +78,7 @@ export const AdminDashboard: React.FC = () => {
 
   // --- State & Logic untuk Pengaturan QRIS ---
   const [qrisUrlInput, setQrisUrlInput] = useState('');
+  const [isUploadingQris, setIsUploadingQris] = useState(false);
 
   useEffect(() => {
     // Membaca URL QRIS yang tersimpan saat admin dashboard dimuat
@@ -91,6 +95,20 @@ export const AdminDashboard: React.FC = () => {
     }
     localStorage.setItem('GABIN_QRIS_URL', qrisUrlInput);
     showToast('Gambar QRIS berhasil diperbarui!', 'success');
+  };
+
+  const handleQrisUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingQris(true);
+    const uploadedUrl = await uploadImage(file);
+    if (uploadedUrl) {
+      setQrisUrlInput(uploadedUrl);
+      localStorage.setItem('GABIN_QRIS_URL', uploadedUrl); // Simpan otomatis
+      showToast('QRIS berhasil diunggah & otomatis disimpan!', 'success');
+    }
+    setIsUploadingQris(false);
   };
   // ------------------------------------------
 
@@ -109,6 +127,21 @@ export const AdminDashboard: React.FC = () => {
     richness: 4,
     ingredients: 'Susu Segar, Custard Base, Mentega',
   });
+
+  const [isUploadingFlavorImage, setIsUploadingFlavorImage] = useState(false);
+
+  const handleFlavorImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingFlavorImage(true);
+    const uploadedUrl = await uploadImage(file);
+    if (uploadedUrl) {
+      setFlavorForm(prev => ({ ...prev, image: uploadedUrl }));
+      showToast('Foto menu berhasil diunggah!', 'success');
+    }
+    setIsUploadingFlavorImage(false);
+  };
 
   // Open Flavor Modal
   const handleOpenFlavorModal = (flavor?: Flavor) => {
@@ -788,14 +821,19 @@ export const AdminDashboard: React.FC = () => {
               </button>
             </div>
 
-            {/* Pengaturan QRIS Pembayaran (Baru Ditambahkan) */}
+            {/* Pengaturan QRIS Pembayaran (Terhubung Cloudinary) */}
             <div className="bg-white rounded-3xl border border-[#ECD9C7] p-5 shadow-sm flex flex-col sm:flex-row gap-5 items-center">
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 relative group">
                 <img
                   src={qrisUrlInput || "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=GABIN_FLA_QRIS_DUMMY_URL"}
                   alt="QRIS Preview"
                   className="w-24 h-24 rounded-xl border border-stone-200 object-cover shadow-xs"
                 />
+                {isUploadingQris && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl">
+                     <Loader2 className="h-6 w-6 text-[#E88C38] animate-spin" />
+                  </div>
+                )}
               </div>
               <div className="flex-1 space-y-2 w-full">
                 <h3 className="font-bold text-[#321F13] text-sm flex items-center gap-1.5">
@@ -803,23 +841,30 @@ export const AdminDashboard: React.FC = () => {
                   Pengaturan Gambar QRIS Pembayaran
                 </h3>
                 <p className="text-xs text-[#7A6455]">
-                  Masukkan URL gambar QRIS (dari Imgur, Postimage, dll) yang akan ditampilkan kepada pelanggan di halaman sukses untuk pembayaran DP.
+                  Unggah gambar QRIS atau masukkan URL yang akan ditampilkan kepada pelanggan di halaman sukses untuk pembayaran DP.
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <input
                     type="url"
                     value={qrisUrlInput}
                     onChange={(e) => setQrisUrlInput(e.target.value)}
-                    placeholder="https://..."
-                    className="flex-1 px-3 py-2 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-xs focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
+                    placeholder="Atau paste URL QRIS di sini..."
+                    className="w-full sm:w-auto flex-1 px-3 py-2 rounded-xl bg-[#FFFDF9] border border-[#E0CCBC] text-xs focus:outline-none focus:ring-2 focus:ring-[#E88C38]"
                   />
-                  <button
-                    type="button"
-                    onClick={handleSaveQris}
-                    className="px-4 py-2 bg-[#3B281B] hover:bg-[#2F1C11] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    Simpan QRIS
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <label className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl transition-colors cursor-pointer border border-stone-300">
+                      <UploadCloud className="h-4 w-4" />
+                      <span>Upload</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleQrisUpload} disabled={isUploadingQris} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleSaveQris}
+                      className="flex-1 sm:flex-none px-4 py-2 bg-[#3B281B] hover:bg-[#2F1C11] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Simpan
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1026,7 +1071,7 @@ export const AdminDashboard: React.FC = () => {
         {adminTab === 'partners' && <AdminPartnershipManager />}
       </main>
 
-      {/* MODAL: ADD / EDIT FLAVOR (Dilengkapi Pilihan Status Mode & Kategori yang Disederhanakan) */}
+      {/* MODAL: ADD / EDIT FLAVOR */}
       {flavorModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
           <div className="w-full max-w-lg bg-white rounded-3xl border border-[#ECD9C7] p-6 shadow-2xl space-y-5 my-8">
@@ -1109,15 +1154,24 @@ export const AdminDashboard: React.FC = () => {
                 />
               </div>
 
+              {/* Foto Produk Terintegrasi Cloudinary */}
               <div className="space-y-1">
-                <label className="font-bold text-[#4A3427]">URL Foto Produk (Hotlink)</label>
-                <input
-                  type="url"
-                  required
-                  value={flavorForm.image}
-                  onChange={(e) => setFlavorForm({ ...flavorForm, image: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8]"
-                />
+                <label className="font-bold text-[#4A3427]">Foto Produk</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    required
+                    placeholder="URL Gambar atau Upload..."
+                    value={flavorForm.image}
+                    onChange={(e) => setFlavorForm({ ...flavorForm, image: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#DECBC0] text-xs bg-[#FFFCF8]"
+                  />
+                  <label className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-[#E88C38]/10 hover:bg-[#E88C38]/20 border border-[#FAD8BD] text-[#C46A18] text-xs font-bold rounded-xl transition-colors cursor-pointer">
+                    {isUploadingFlavorImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                    <span className="hidden sm:inline">{isUploadingFlavorImage ? 'Mengunggah...' : 'Upload'}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFlavorImageUpload} disabled={isUploadingFlavorImage} />
+                  </label>
+                </div>
               </div>
 
               {/* Status Mode Selector */}
