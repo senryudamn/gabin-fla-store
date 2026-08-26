@@ -32,18 +32,19 @@ export const OrderForm: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Success Modal State
+  // Success Modal State (DITAMBAHKAN paymentUrl UNTUK DUITKU)
   const [successOrderData, setSuccessOrderData] = useState<{
     orderCode: string;
     whatsappUrl: string;
     total: number;
     dp: number;
+    paymentUrl?: string; 
   } | null>(null);
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedDp, setCopiedDp] = useState(false);
   
-  // State untuk menyimpan URL QRIS dinamis dari LocalStorage (Admin)
+  // State untuk menyimpan URL QRIS manual dari LocalStorage (Sebagai Fallback/Cadangan)
   const [qrisImageUrl, setQrisImageUrl] = useState("https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=GABIN_FLA_QRIS_DUMMY_URL");
 
   // Ambil data QRIS saat modal sukses terbuka
@@ -64,7 +65,8 @@ export const OrderForm: React.FC = () => {
   const nextTenMilestone = Math.ceil(pricing.totalPcs / 10) * 10 || 10;
   const pcsToNextDiscount = nextTenMilestone - pricing.totalPcs;
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  // DIUBAH MENJADI ASYNC UNTUK MENGHUBUNGI DUITKU
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!customerName.trim()) {
@@ -84,6 +86,7 @@ export const OrderForm: React.FC = () => {
 
     setIsSubmitting(true);
 
+    // 1. Simpan pesanan ke Firebase
     const result = createOrder({
       customerName,
       whatsappNumber,
@@ -94,6 +97,32 @@ export const OrderForm: React.FC = () => {
     });
 
     if (result) {
+      let finalPaymentUrl = "";
+
+      try {
+        // 2. Tembak API Backend Netlify kita untuk membuat tagihan Duitku
+        const response = await fetch('/.netlify/functions/createTransaction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: result.order.orderCode,
+            grossAmount: result.order.dpAmount, // Nominal tagihan adalah DP 50%
+            customerName: customerName,
+            phone: whatsappNumber
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.paymentUrl) {
+          finalPaymentUrl = data.paymentUrl;
+        } else {
+          console.warn("Duitku API Response:", data.error);
+        }
+      } catch (err) {
+        console.error("Gagal menghubungi server pembayaran", err);
+      }
+
       try {
         confetti({
           particleCount: 120,
@@ -103,11 +132,13 @@ export const OrderForm: React.FC = () => {
         });
       } catch (err) {}
 
+      // 3. Tampilkan Pop-Up Sukses
       setSuccessOrderData({
         orderCode: result.order.orderCode,
         whatsappUrl: result.whatsappUrl,
         total: result.order.totalPrice,
         dp: result.order.dpAmount,
+        paymentUrl: finalPaymentUrl // Masukkan link pembayaran jika berhasil didapat
       });
 
       setCustomerName('');
@@ -480,8 +511,14 @@ export const OrderForm: React.FC = () => {
                     : 'bg-stone-300 text-stone-500 cursor-not-allowed'
                 }`}
               >
-                <Send className="h-4 w-4" />
-                <span>{isMinimumMet ? 'Kirim Pesanan ke WhatsApp' : `Tambah ${pcsToMin} Pcs Lagi untuk Pesan`}</span>
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">Mempersiapkan Tagihan...</span>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    <span>{isMinimumMet ? 'Kirim Pesanan ke WhatsApp' : `Tambah ${pcsToMin} Pcs Lagi untuk Pesan`}</span>
+                  </>
+                )}
               </button>
 
               <div className="flex items-center gap-2 text-[11px] text-[#8C7362] justify-center">
@@ -493,13 +530,11 @@ export const OrderForm: React.FC = () => {
         </form>
       </div>
 
-      {/* Order Success & QRIS Payment Modal (DIPERKECIL & RAPI) */}
+      {/* Order Success & QRIS Payment Modal */}
       {successOrderData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          {/* Max-H-[90vh] dan overflow-y-auto mencegah modal terpotong di layar HP/Laptop kecil */}
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl border border-[#ECD9C7] p-5 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-200">
             
-            {/* Tombol X ditempatkan lebih rapi di dalam Container agar aman */}
             <button 
               onClick={() => setSuccessOrderData(null)} 
               className="absolute top-4 right-4 p-2 bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors cursor-pointer z-10"
@@ -566,21 +601,41 @@ export const OrderForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Column: QRIS Instruction */}
+              {/* Right Column: Duitku Integration & Fallback QRIS */}
               <div className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-stone-200 bg-stone-50 text-center">
-                 {/* Gambar QRIS ditarik dari LocalStorage admin */}
-                 <img 
-                   src={qrisImageUrl} 
-                   alt="QRIS Pembayaran Gabin Fla" 
-                   className="w-32 h-32 rounded-xl shadow-md mb-3 border-4 border-white object-cover"
-                 />
-                 <h4 className="font-bold text-[#321F13] text-sm">Scan QRIS untuk Bayar</h4>
-                 <p className="text-[11px] text-stone-500 mt-1 max-w-[200px]">
-                   Masukkan <strong>tepat</strong> nominal DP yang tertera di samping. 
-                 </p>
-                 <span className="mt-2 text-[9px] text-stone-400 italic">
-                   *Untuk QRIS Dinamis otomatis membutuhkan Payment Gateway tambahan.
-                 </span>
+                 {successOrderData.paymentUrl ? (
+                   // Jika API Duitku Berhasil
+                   <div className="flex flex-col items-center w-full">
+                     <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                       <CreditCard className="h-8 w-8 text-blue-600" />
+                     </div>
+                     <h4 className="font-bold text-[#321F13] text-sm">Pembayaran Otomatis</h4>
+                     <p className="text-[11px] text-stone-500 mt-1 max-w-[200px] mb-4">
+                       Klik tombol di bawah untuk membayar DP via QRIS, GoPay, atau Virtual Account melalui Duitku.
+                     </p>
+                     <a 
+                       href={successOrderData.paymentUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="px-6 py-3 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                     >
+                       <CreditCard className="h-4 w-4" /> Bayar Sekarang
+                     </a>
+                   </div>
+                 ) : (
+                   // Jika API Duitku Gagal / Belum Siap (Fallback)
+                   <>
+                     <img 
+                       src={qrisImageUrl} 
+                       alt="QRIS Pembayaran Gabin Fla" 
+                       className="w-32 h-32 rounded-xl shadow-md mb-3 border-4 border-white object-cover"
+                     />
+                     <h4 className="font-bold text-[#321F13] text-sm">Scan QRIS untuk Bayar</h4>
+                     <p className="text-[11px] text-stone-500 mt-1 max-w-[200px]">
+                       Masukkan <strong>tepat</strong> nominal DP yang tertera di samping. 
+                     </p>
+                   </>
+                 )}
               </div>
             </div>
 
